@@ -56,7 +56,7 @@ router.post("/addCustomer", async (req, res) => {
       name: name,
       email: email,
       password: hashed,
-      phone: phone,g
+      phone: phone,
     });
     const token = jwt.sign(
       { email: result.email, id: result._id },
