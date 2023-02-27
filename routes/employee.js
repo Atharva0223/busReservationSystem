@@ -8,7 +8,19 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 router.get("/getAllEmployees", authMiddleware, async (req, res) => {
   try {
-    const docs = await Employee.find();
+    const docs = await Employee.find({isDeleted: false});
+    res.status(200).json({ docs });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      error: err,
+    });
+  }
+});
+
+router.get("/getAllDeletedEmployees", authMiddleware, async (req, res) => {
+  try {
+    const docs = await Employee.find({isDeleted: true});
     res.status(200).json({ docs });
   } catch (err) {
     console.log(err);
@@ -40,12 +52,12 @@ router.get("/getEmployeeById/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/deleteEmployeeById/:id", authMiddleware, async (req, res) => {
+router.patch("/deleteEmployeeById/:id", authMiddleware, async (req, res) => {
   try {
-    const id = req.params.id;
-    console.log(id);
-    const deletedEmployee = await Employee.deleteOne({ _id: id });
-
+    const deletedEmployee = await Employee.updateOne(
+      {_id: req.params.id},
+    {$set:{isDeleted: true }}
+    )
     if (!deletedEmployee) {
       return res.status(404).json({
         message: "Employee not found",
@@ -54,6 +66,10 @@ router.delete("/deleteEmployeeById/:id", authMiddleware, async (req, res) => {
     res.set("authorization", "");
     res.status(200).json({
       message: "Employee deleted",
+      request: {
+        type: "POST",
+        url: "http://localhost:3000/getAllEmployees",
+      }
     });
   } catch (err) {
     console.log(err);
