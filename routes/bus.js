@@ -5,9 +5,21 @@ const mongoose = require("mongoose");
 const Bus = require("../models/bus");
 const authMiddleware = require("../middleware/authMiddleware");
 
-router.get("/getAllBuses", async (req, res) => {
+router.get("/getAllBus", async (req, res) => {
   try {
-    const docs = await Bus.find();
+    const docs = await Bus.find({isDeleted: false});
+    res.status(200).json({ docs });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      error: err,
+    });
+  }
+});
+
+router.get("/getAllDeletedBuses", async (req, res) => {
+  try {
+    const docs = await Bus.find({isDeleted: true});
     res.status(200).json({ docs });
   } catch (err) {
     console.log(err);
@@ -19,7 +31,7 @@ router.get("/getAllBuses", async (req, res) => {
 
 router.post("/addBus", authMiddleware, async (req, res) => {
   try {
-    const bus = await Bus.find({ plate: req.params.plate });
+    const bus = await Bus.find({ plate: req.body.plate });
     if (!bus) {
       return res.status(404).json({
         message: "Cannot add bus plate already exists",
@@ -36,7 +48,6 @@ router.post("/addBus", authMiddleware, async (req, res) => {
       stops: req.body.stops,
     });
     const result = await buses.save();
-    console.log(result);
     res.status(201).json({ result });
   } catch (err) {
     console.log(err);
@@ -68,10 +79,12 @@ router.get("/getBusById/:id", async (req, res) => {
   }
 });
 
-router.delete("/deleteBusById/:id", authMiddleware, async (req, res) => {
+router.patch("/deleteBusById/:id", authMiddleware, async (req, res) => {
   try {
-    const result = await Bus.deleteOne({ _id: req.params.id });
-    if (result.deletedCount === 0) {
+    const result = await Bus.updateOne(
+      { _id: req.params.id },
+      {$set : {isDelete: true}});
+    if (!result) {
       return res.status(404).json({
         message: "bus not found",
       });

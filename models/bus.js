@@ -3,14 +3,14 @@ const mongoose = require("mongoose");
 const busSchema = mongoose.Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    name: { type: String, required: true, unique: true },
-    plate: { type: String, required: true },
+    name: { type: String, required: true },
+    plate: { type: String, required: true, unique: true },
     capacity: { type: Number, required: true },
     route: { type: String, required: true },
     fare: { type: Number, required: true },
     availableSeats: { type: Number, required: true },
     stops: { type: String, required: true },
-    isDeleted: Boolean,
+    isDeleted: {default: false, type: Boolean},
   },
   {
     timestamps: true,
