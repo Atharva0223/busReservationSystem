@@ -2,76 +2,164 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 
+const {
+  authMiddleware,
+  employeeMiddleware,
+} = require("../middleware/authMiddleware");
+
 const Bus = require("../models/bus");
-const authMiddleware = require("../middleware/authMiddleware");
+const Seats = require("../models/seats");
 
-router.get("/getAllBuses", async (req, res) => {
+//Adding a Bus
+router.post("/addBus",employeeMiddleware, async (req, res) => {
   try {
-    const docs = await Bus.find();
-    res.status(200).json({ docs });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      error: err,
-    });
-  }
-});
-
-router.post("/addBus", authMiddleware, async (req, res) => {
-  try {
-    const bus = await Bus.find({ plate: req.params.plate });
-    if (!bus) {
+    const buses = await Bus.findOne({ plate: req.body.plate });
+    if (buses) {
       return res.status(404).json({
         message: "Cannot add bus plate already exists",
       });
     }
-    const buses = new Bus({
+
+    const bus = new Bus({
       _id: mongoose.Types.ObjectId(),
       name: req.body.name,
       plate: req.body.plate,
+      type_of_bus: req.body.type_of_bus,
       capacity: req.body.capacity,
-      route: req.body.route,
-      fare: req.body.fare,
-      availableSeats: req.body.availableSeats,
-      stops: req.body.stops,
+      available_seats: req.body.available_seats,
+      seats: req.body.seats,
+      working_days: req.body.working_days,
     });
-    const result = await buses.save();
-    console.log(result);
+
+    const result = await bus.save();
     res.status(201).json({ result });
   } catch (err) {
     console.log(err);
-    res.status(500).json({
-      error: err,
+    res.status(400).json({
+      error: "Bad request",
     });
   }
 });
 
-router.get("/getBusById/:id", async (req, res) => {
+router.get("/getAllBuses", authMiddleware, async (req, res) => {
   try {
-    const bus = await Bus.find({ _id: req.params.id });
-    if (!bus) {
-      return res.status(404).json({
-        message: "bus not found",
-      });
-    }
+    const buses = await Bus.find()
+      .populate(
+        "seats",
+        "-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted"
+      )
+      .select("-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted")
+      .lean();
+
+    const busesWithSeats = await Promise.all(
+      buses.map(async (bus) => {
+        const seats = await Seats.find({ seat_type: bus.type_of_bus }).lean();
+        return {
+          ...bus,
+          seats
+        };
+      })
+    );
+
     res.status(200).json({
-      bus: bus,
-      request: {
-        type: "GET",
-        url: "http://localhost:3000/getAllBuses",
+      buses: busesWithSeats,
+      Request: {
+        method: "GET",
+        url: "http://localhost:3000/booking",
       },
     });
   } catch (err) {
-    res.status(500).json({
-      error: err,
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
     });
   }
 });
 
-router.delete("/deleteBusById/:id", authMiddleware, async (req, res) => {
+
+router.get("/getBusById/:id", employeeMiddleware, async (req, res) => {
   try {
-    const result = await Bus.deleteOne({ _id: req.params.id });
-    if (result.deletedCount === 0) {
+    const buses = await Bus.find({ _id: req.params.id})
+      .populate(
+        "journey",
+        "-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted"
+      )
+      .select("-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted")
+      .lean();
+
+    const busesWithSeats = await Promise.all(
+      buses.map(async (bus) => {
+        const seats = await Seats.find({ seat_type: bus.type_of_bus }).lean();
+        return {
+          ...bus,
+          seats,
+          availableSeats: bus.available_seats,
+        };
+      })
+    );
+
+    res.status(200).json({
+      buses: busesWithSeats,
+      Request: {
+        method: "GET",
+        url: "http://localhost:3000/booking",
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
+
+
+router.get("/getAllBus/:weekday",authMiddleware, async (req, res) => {
+  try {
+    const buses = await Bus.find({ weekday: req.params.weekday})
+      .populate(
+        "journey",
+        "-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted"
+      )
+      .select("-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted")
+      .lean();
+
+    const busesWithSeats = await Promise.all(
+      buses.map(async (bus) => {
+        const seats = await Seats.find({ seat_type: bus.type_of_bus }).lean();
+        return {
+          ...bus,
+          seats,
+          availableSeats: bus.available_seats,
+        };
+      })
+    );
+
+    res.status(200).json({
+      buses: busesWithSeats,
+      Request: {
+        method: "GET",
+        url: "http://localhost:3000/booking",
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
+
+
+router.patch("/deleteBusById/:id", employeeMiddleware, async (req, res) => {
+  try {
+    const result = await Bus.updateOne(
+      { _id: req.params.id },
+      { $set: { isDelete: true } }
+    )
+      .select("-createdAt -updatedAt -__v -createdBy -updatedBy -isDeleted")
+      .lean();
+    if (!result) {
       return res.status(404).json({
         message: "bus not found",
       });
@@ -84,10 +172,43 @@ router.delete("/deleteBusById/:id", authMiddleware, async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({
-      error: err,
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
     });
   }
 });
 
+router.get("/getAllDeletedBuses", employeeMiddleware, async (req, res) => {
+  try {
+    const docs = await Bus.find({ isDeleted: true })
+      .select("-createdAt -updatedAt -__v -createdBy -updatedBy")
+      .lean();
+    res.status(200).json({ docs });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
+
+router.patch("/updateBus/:id", employeeMiddleware, async (req, res) => {
+  try {
+    const setter = req.body;
+    if (ObjectId.isValid(req.params.id)) {
+      const updates = await Bus.updateOne(
+        { _id: req.params.id },
+        { $set: { setter } }
+      );
+      res.status(200).json({ Updated: updates });
+    } else {
+      res.status(400).json({ error: "Invalid ObjectId" });
+    }
+  } catch {
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
 module.exports = router;
