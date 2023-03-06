@@ -1,0 +1,15 @@
+"_id": "64054929a5f139ba2e21cf26",
+"name": "Bugs Bunny",
+"email": "bugs@mail.in",
+"phone": 1232343454,
+"password": "password",
+"role": "Employee",
+"employee_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJ1Z3NAbWFpbC5pbiIsImlkIjoiNjQwNTQ5MjlhNWYxMzliYTJlMjFjZjI2Iiwicm9sZSI6IkFkbWluIiwiaWF0IjoxNjc4MDY4MDA5LCJleHAiOjE2NzgxNTQ0MDl9.q48W04X0uE5BHx4UWlV41NQ05knRtgfpk8ygDVBhna8"
+
+"_id": "6405495ea5f139ba2e21cf29",
+"name": "Daffy Duck",
+"email": "daffy@mail.in",
+"address": "Texas",
+"password": "password",
+"phone": "1232343454",
+"customer_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRhZmZ5QG1haWwuaW4iLCJpZCI6IjY0MDU0OTVlYTVmMTM5YmEyZTIxY2YyOSIsInJvbGUiOiJDdXN0b21lciIsImlhdCI6MTY3ODA2ODA2MiwiZXhwIjoxNjc4MTU0NDYyfQ.vzT504NV8VYx7BZzUKdA6eswfoX-T3Km8ZNdbUyzfg4"
