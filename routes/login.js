@@ -5,13 +5,17 @@ const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
+const {
+  customerMiddleware,
+  employeeMiddleware,
+} = require("../middleware/authMiddleware");
+
 const Customer = require("../models/customer");
 const Employee = require("../models/employee");
 
-router.post("/employeeLogin", async (req, res) => {
+router.post("/employeeLogin",employeeMiddleware, async (req, res) => {
   const { email, password } = req.body;
   try {
-    //employee login
     const employeeExists = await Employee.findOne({ email: email });
     if (employeeExists) {
       const matchEmpPassword = await bcrypt.compare(
@@ -19,15 +23,26 @@ router.post("/employeeLogin", async (req, res) => {
         employeeExists.password
       );
       if (matchEmpPassword) {
-        const eToken = jwt.sign(
-          { email: email, id: employeeExists._id },
-          process.env.JWT_KEY
-        );
-        const decodedToken = jwt.verify(eToken, process.env.JWT_KEY); // Verify the token
+        const payload = {
+          email: email,
+          id: employeeExists._id,
+          role: "Admin"
+        }
+        const options = {
+          expiresIn: '24h'
+        };
+        
+        const eToken = jwt.sign(payload,process.env.JWT_KEY,options);
+
+        const decodedToken = jwt.verify(eToken, process.env.JWT_KEY);
         res.status(201).json({
           Employee: { employeeExists },
           eToken,
-          decodedToken, // Add the decoded token to the response
+          Request:
+          {
+            method: "GET",
+            url: "http://localhost:3000/"
+          }
         });
       } else {
         res.status(401).json({
@@ -40,31 +55,42 @@ router.post("/employeeLogin", async (req, res) => {
         .json({ message: "Authentication failed: Invalid email or password" });
     }
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
+    });
   }
 });
 
-router.post("/customerLogin", async (req, res) => {
+router.post("/customerLogin", customerMiddleware, async (req, res) => {
   const { email, password } = req.body;
   try {
-    //employee login
     const customerExists = await Customer.findOne({ email: email });
+    console.log(customerExists);
     if (customerExists) {
       const matchCustPassword = await bcrypt.compare(
         password,
         customerExists.password
       );
       if (matchCustPassword) {
-        const cToken = jwt.sign(
-          { email: email, id: customerExists._id },
-          process.env.JWT_KEY
-        );
+        const payload = {
+          email: email,
+          id: customerExists._id,
+          role: "Customer"
+        }
+        const options = {
+          expiresIn: '24h'
+        };
+        
+        const cToken = jwt.sign(payload,process.env.JWT_KEY,options);
         const decodedToken = jwt.verify(cToken, process.env.JWT_KEY); // Verify the token
         res.status(201).json({
           Customer: { customerExists },
           cToken,
-          decodedToken, // Add the decoded token to the response
+          Requests:{
+            method: "GET",
+            url: "http://localhost:3000/getAllJourney"
+          } // Add the decoded token to the response
         });
       } else {
         res.status(401).json({
@@ -77,8 +103,10 @@ router.post("/customerLogin", async (req, res) => {
         .json({ message: "Authentication failed: Invalid email or password" });
     }
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.log(err);
+    res.status(400).json({
+      error: "Bad request",
+    });
   }
 });
 
