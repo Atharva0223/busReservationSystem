@@ -1,7 +1,7 @@
 require("dotenv").config();
 
-// require("./config/database");
-require("./jest_config/jest_connect");
+require("./config/database");
+// require("./jest_config/jest_connect");
 
 const morgan = require("morgan");
 const express = require("express");
