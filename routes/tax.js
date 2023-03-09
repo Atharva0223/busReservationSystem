@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
-const { employeeMiddleware } = require("../middleware/authMiddleware");
+const { employeeMiddleware, authMiddleware } = require("../middleware/authMiddleware");
 require("dotenv").config();
 
 const Taxes = require("../models/tax");
@@ -31,7 +31,7 @@ router.post("/addTaxes", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllTaxes", employeeMiddleware, async (req, res) => {
+router.get("/getAllTaxes", authMiddleware, async (req, res) => {
   try {
     const result = await Taxes.find({ isDeleted: false });
     res.status(200).json({ "All the taxes are ": result });

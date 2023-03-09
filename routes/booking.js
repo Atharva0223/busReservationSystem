@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const Bus = require("../models/bus");
 const Journey = require("../models/journey");
 const Booking = require("../models/booking");
 
@@ -97,7 +96,7 @@ router.get("/getAllcanceledBookings", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateBooking/:id", employeeMiddleware, async (req, res) => {
+router.patch("/updateBooking/:id", authMiddleware, async (req, res) => {
   try {
     const setter = req.body;
     const updates = await Booking.updateOne(

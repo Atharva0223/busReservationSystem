@@ -87,9 +87,6 @@ router.post("/registerEmployee", async (req, res) => {
       id: result._id,
       role: "Admin",
     };
-    const options = {
-      expiresIn: "24h", // token will expire in 1 hour
-    };
     const token = jwt.sign(payload, process.env.JWT_KEY, options);
 
     res.status(201).json({
@@ -143,8 +140,7 @@ router.patch("/removeEmployeeById/:id", employeeMiddleware, async (req, res) => 
 
 router.get("/getAllRemovedEmployees", employeeMiddleware, async (req, res) => {
   try {
-    const docs = await Employee.find({ isDeleted: true });
-    res.status(200).json({ docs });
+    res.status(200).json({ message: "Operation Successful" ,employee });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -153,13 +149,19 @@ router.get("/getAllRemovedEmployees", employeeMiddleware, async (req, res) => {
 });
 
 router.patch("/updateEmployee/:id", employeeMiddleware, async (req, res) => {
+  const employee = await Employee.findOne({ _id: req.params.id });
+    if (!employee) {
+      return res.status(400).json({
+        message: "employee not found",
+      });
+    }
   try {
     const setter = req.body;
     const updates = await Employee.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(200).json({ Updated: updates });
+    res.status(200).json({ message: "Update Successful" ,Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

@@ -183,7 +183,7 @@ describe("GET /getAllEmployees", () => {
 // ---------------------------------------------------------------------------------------
 //removing an eployee by id
 describe("PATCH /removeEmployeeById/:id", () => {
-//check if employee exists
+  //check if employee exists
   it("should check if employee exists before deleting", async () => {
     const token = tokens.employeeToken;
     const res = await request(app)
@@ -193,17 +193,19 @@ describe("PATCH /removeEmployeeById/:id", () => {
     expect(res.body.message).toBe("employee not found");
     console.log(res.body);
   });
-//check if token is valid
+  //check if token is valid
   it("should check if token is valid", async () => {
     const token = tokens.customerToken;
     const res = await request(app)
       .patch("/removeEmployeeById/6405758edf666666d7152093")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
-    expect(res.body.message).toBe("Forbidden: You do not have permission to access this resource");
+    expect(res.body.message).toBe(
+      "Forbidden: You do not have permission to access this resource"
+    );
     console.log(res.body);
   });
-//check if token is not unauthorized
+  //check if token is not unauthorized
   it("should check if token is authorized", async () => {
     const token = tokens.unauthorizedToken;
     const res = await request(app)
@@ -213,48 +215,134 @@ describe("PATCH /removeEmployeeById/:id", () => {
     expect(res.body.message).toBe("Authentication failed");
     console.log(res.body);
   });
-//check if token is passed or not
-it("should check if token is passed or not", async () => {
-  const res = await request(app)
-    .patch("/removeEmployeeById/6405758edf666666d7152093")
-  expect(res.statusCode).toBe(403);
-  expect(res.body.message).toBe("Authentication failed");
-  console.log(res.body);
-});
-//removing the employee from the database
-it("removing the employee", async () => {
-  const token = tokens.employeeToken;
-  const res = await request(app)
-    .patch("/removeEmployeeById/64054929a5f139ba2e21cf26")
-    .set("Authorization", `Bearer ${token}`);
-  expect(res.statusCode).toBe(200);
-  expect(res.body.message).toBe("Employee deleted");
-  console.log(res.body);
-});
+  //check if token is passed or not
+  it("should check if token is passed or not", async () => {
+    const res = await request(app).patch(
+      "/removeEmployeeById/6405758edf666666d7152093"
+    );
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //removing the employee from the database
+  it("removing the employee", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .patch("/removeEmployeeById/64054929a5f139ba2e21cf26")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Employee deleted");
+    console.log(res.body);
+  });
 });
 // ---------------------------------------------------------------------------------------
 //getting all removed employees
 describe("GET /getAllRemovedEmployees", () => {
-  it("should return all removed employee", async () => {
+  //should return all employees
+  it("should return 200 with all removed employee", async () => {
     const token = tokens.employeeToken;
     const res = await request(app)
       .get("/getAllRemovedEmployees")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Operation Successful");
+    console.log(res.body.message);
+  });
+  //unauthorized customer token
+  it("should return 403 Forbidden access", async () => {
+    const token = tokens.customerToken;
+    const res = await request(app)
+      .get(`/getAllRemovedEmployees`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe(
+      "Forbidden: You do not have permission to access this resource"
+    );
+    console.log(res.body);
+  });
+  //unauthorized token
+  it("should return 403 Authentication failed", async () => {
+    const token = tokens.unauthorizedToken;
+    const res = await request(app)
+      .get(`/getAllRemovedEmployees`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //Token no provided
+  it("should return 403 no token", async () => {
+    const res = await request(app).get(`/getAllRemovedEmployees`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
   });
 });
 // ---------------------------------------------------------------------------------------
-//updating employee details
-// describe("PATCH /updateEmployee/:id", () => {
-//   it("should update one employee by id", async () => {
-//     const token = tokens.employeeToken;
-//     const res = await request(app)
-//     .patch("/updateEmployee/64054929a5f139ba2e21cf26")
-//     .set("Authorization", `Bearer ${token}`)
-//     .send({
-//       name: "AST DFG",
-//       role: "Admin"
-//     });
-//     expect(res.statusCode).toBe(200);
-//   });
-// });
+// updating employee details
+describe("PATCH /updateEmployee/:id", () => {
+  //check if employee exists
+  it("should check if employee exists before deleting", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .patch("/updateEmployee/6405758edf556666d7152093")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe("employee not found");
+    console.log(res.body);
+  });
+  //updating employee name
+  it("should update name of one employee by id", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .patch("/updateEmployee/64054929a5f139ba2e21cf26")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "AST BGF",
+      });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Update Successful");
+    console.log(res.body);
+  });
+  //updating employee Role
+  it("should update name of one employee by id", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .patch("/updateEmployee/64054929a5f139ba2e21cf26")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        role: "Employee",
+      });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Update Successful");
+    console.log(res.body);
+  });
+  //updating an employee by id with invalid token
+  it("should update one employee by id", async () => {
+    const token = tokens.unauthorizedToken;
+    const res = await request(app)
+      .patch("/updateEmployee/64054929a5f139ba2e21cf26")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "AST DFG",
+        role: "Admin",
+      });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //updating an employee by id with customer token
+  it("should update one employee by id", async () => {
+    const token = tokens.customerToken;
+    const res = await request(app)
+      .patch("/updateEmployee/64054929a5f139ba2e21cf26")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "AST DFG",
+        role: "Admin",
+      });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe("Forbidden: You do not have permission to access this resource");
+    console.log(res.body);
+  });
+});

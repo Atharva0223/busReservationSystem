@@ -42,13 +42,13 @@ router.post("/registerCustomer", async (req, res) => {
         "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character, and be at least 8 characters long",
     });
   }
+  const exists = await Customer.findOne({ $or: [{ email: email }, { phone: phone }] });
+  if (exists) {
+    return res.status(400).json({
+      message: "Customer email or phone already exists",
+    });
+  }
   try {
-    const exists = await Customer.findOne({ email: email });
-    if (exists) {
-      return res.status(400).json({
-        message: "Customer email already exists",
-      });
-    }
     const hashed = await bcrypt.hash(password, 10);
     const result = await Customer.create({
       _id: mongoose.Types.ObjectId(),
@@ -63,11 +63,9 @@ router.post("/registerCustomer", async (req, res) => {
       id: result._id,
       role: "Customer",
     };
-    const options = {
-      expiresIn: "24h", // token will expire in 1 hour
-    };
     const token = jwt.sign(payload, process.env.JWT_KEY, options);
     res.status(201).json({
+      message: "Registration Successful",
       result,
       token,
       request: {
@@ -82,7 +80,7 @@ router.post("/registerCustomer", async (req, res) => {
   }
 });
 
-router.get("/getCustomerById/:id", employeeMiddleware, async (req, res) => {
+router.get("/getCustomerById/:id", authMiddleware, async (req, res) => {
   try {
     const customer = await Customer.find({ _id: req.params.id });
     if (!customer) {
@@ -142,7 +140,7 @@ router.get("/getAllRemovedCustomers", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateCustomer/:id", employeeMiddleware, async (req, res) => {
+router.patch("/updateCustomer/:id", authMiddleware, async (req, res) => {
   try {
     const setter = req.body;
     const updates = await Customer.updateOne(
