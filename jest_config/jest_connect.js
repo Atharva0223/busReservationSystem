@@ -1,11 +1,15 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 mongoose.set("strictQuery", false);
 
 /* Connecting to the database before each test. */
 beforeAll(async () => {
   await mongoose.connect(
-    "mongodb+srv://open:open@busreservationsystem.6hurjhb.mongodb.net/test"
+    "mongodb+srv://" +
+      process.env.USER_NAME +
+      ":" +
+      process.env.PASSWORD +
+      "@busreservationsystem.6hurjhb.mongodb.net/test"
   );
 });
 
