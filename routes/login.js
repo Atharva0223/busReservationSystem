@@ -5,20 +5,22 @@ const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
-const {
-  customerMiddleware,
-  employeeMiddleware,
-} = require("../middleware/authMiddleware");
+const middleware = require("../middleware/middleware");
 
 const Customer = require("../models/customer");
 const Employee = require("../models/employee");
 
-router.post("/employeeLogin", employeeMiddleware, async (req, res) => {
-  const { email, password } = req.body;
-  if(!email || !password){
-    return res.status(400).json({message: "All fields are required"});
+router.post("/employeeLogin", middleware, async (req, res) => {
+  if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
   }
-    try {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+  try {
     const employeeExists = await Employee.findOne({ email: email });
     if (employeeExists) {
       const matchEmpPassword = await bcrypt.compare(
@@ -151,10 +153,15 @@ router.post("/employeeLogin", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.post("/customerLogin", customerMiddleware, async (req, res) => {
+router.post("/customerLogin", middleware, async (req, res) => {
+  if (req.userData.role !== "Customer") {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
+  }
   const { email, password } = req.body;
-  if(!email || !password) {
-    return res.status(400).json({ message:"All fields are required"});
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
   }
   try {
     const customerExists = await Customer.findOne({ email: email });
@@ -185,35 +192,8 @@ router.post("/customerLogin", customerMiddleware, async (req, res) => {
           },
           Token: cToken,
           Requests: {
-            "Booking Requests": {
-              url: "http://localhost:3000/getAllBookings",
-            },
-            "Bus Requests": {
-              url: "http://localhost:3000/getAllBuses",
-            },
-            "Coupons Requests": {
-              url: "http://localhost:3000/getAllCoupons",
-            },
-            "Journey Requests": {
+            "Journeys": {
               url: "http://localhost:3000/getAllJourneys",
-            },
-            "JourneyStops Requests": {
-              url: "http://localhost:3000/getAllJourneyStops",
-            },
-            "Payments Requests": {
-              url: "http://localhost:3000/addPayment",
-            },
-            "PaymentTypes Requests": {
-              url: "http://localhost:3000/getAllPaymentTypes",
-            },
-            "Seats Requests": {
-              url: "http://localhost:3000/getAllSeats",
-            },
-            "Stops Requests": {
-              url: "http://localhost:3000/getAllStops",
-            },
-            "Tax Requests": {
-              url: "http://localhost:3000/getAllTaxes",
             },
           },
         });

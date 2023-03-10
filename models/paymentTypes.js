@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const paymentTypeSchema = mongoose.Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    paymentTypes: { type: String },
+    paymentMode: { type: String },
     createdBy: {
       type: mongoose.Types.ObjectId,
       ref: "Employee",
@@ -16,7 +16,7 @@ const paymentTypeSchema = mongoose.Schema(
       select: false,
       immutable: true,
     },
-    isDeleted: { default: false, type: Boolean, select: false },
+    isDeleted: { default: false, select: false , type: Boolean },
   },
   {
     timestamps: true,

@@ -9,7 +9,7 @@ beforeAll(async () => {
       process.env.USER_NAME +
       ":" +
       process.env.PASSWORD +
-      "@busreservationsystem.6hurjhb.mongodb.net/test"
+      "@testing.zk8zmu0.mongodb.net/?retryWrites=true&w=majority"
   );
 });
 

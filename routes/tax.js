@@ -1,15 +1,17 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
-const {
-  employeeMiddleware,
-  authMiddleware,
-} = require("../middleware/authMiddleware");
+const middleware = require("../middleware/middleware");
 require("dotenv").config();
 
 const Taxes = require("../models/tax");
 
-router.post("/addTaxes", employeeMiddleware, async (req, res) => {
+router.post("/addTaxes", middleware, async (req, res) => {
+  if (req.userData.role !== "Admin") {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
+  }
   const { state_cross_tax, cgst, sgst, tolls, createdBy } = req.body;
   if (!state_cross_tax || !cgst || !sgst || !tolls || !createdBy) {
     res.status(400).json({ message: "All fields are required" });
@@ -31,8 +33,17 @@ router.post("/addTaxes", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllTaxes", authMiddleware, async (req, res) => {
+router.get("/getAllTaxes", middleware, async (req, res) => {
   try {
+    if (
+      req.userData.role !== "Admin" &&
+      req.userData.role !== "Employee" &&
+      req.userData.role !== "Customer"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const result = await Taxes.find({ isDeleted: false });
     res
       .status(200)
@@ -44,8 +55,13 @@ router.get("/getAllTaxes", authMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/removeTax/:id", employeeMiddleware, async (req, res) => {
+router.patch("/removeTax/:id", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const exists = await Taxes.findOne({
       $and: [{ _id: req.params.id, isDeleted: false }],
     });
@@ -65,8 +81,13 @@ router.patch("/removeTax/:id", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllremovedTaxes", employeeMiddleware, async (req, res) => {
+router.get("/getAllremovedTaxes", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const result = await Taxes.find({ isDeleted: true });
     res.status(200).json({ "All the taxes that have been removed ": result });
   } catch (error) {
@@ -76,12 +97,17 @@ router.get("/getAllremovedTaxes", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateTax/:id", employeeMiddleware, async (req, res) => {
+router.patch("/updateTax/:id", middleware, async (req, res) => {
+  if (req.userData.role !== "Admin") {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
+  }
   const exists = await Taxes.findOne({
-    $and: { _id: req.params.id, isDeleted: false },
+    $and: [{ _id: req.params.id, isDeleted: false }],
   });
-  if(!exists) {
-    return res.status(404).json({ message:"Tax Not Found"});
+  if (!exists) {
+    return res.status(404).json({ message: "Tax Not Found" });
   }
   try {
     const setter = req.body;
@@ -89,7 +115,7 @@ router.patch("/updateTax/:id", employeeMiddleware, async (req, res) => {
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(200).json({ message: "Updated Successfully", Updated: updates });
+    res.status(200).json({ message: "Updated Successfully", Updated: setter });
   } catch {
     res.status(400).json({
       error: "Bad request",

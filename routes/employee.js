@@ -6,41 +6,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const Employee = require("../models/employee");
-const { employeeMiddleware } = require("../middleware/authMiddleware");
-
-router.get("/getAllEmployees", employeeMiddleware, async (req, res) => {
-  try {
-    const docs = await Employee.find({ isDeleted: false });
-    res.status(200).json({ message: "Operation Successful", docs });
-  } catch (err) {
-    res.status(400).json({
-      error: "Bad request",
-    });
-  }
-});
-
-router.get("/getEmployeeById/:id", employeeMiddleware, async (req, res) => {
-  try {
-    const employee = await Employee.findOne({ _id: req.params.id });
-    if (!employee) {
-      return res.status(400).json({
-        message: "employee not found",
-      });
-    }
-    res.status(200).json({
-      message: "Operation successful",
-      employee: employee,
-      request: {
-        type: "GET",
-        url: "http://localhost:3000/getAllEmployees",
-      },
-    });
-  } catch (err) {
-    res.status(400).json({
-      message: "Bad request",
-    });
-  }
-});
+const middleware = require("../middleware/middleware");
 
 router.post("/registerEmployee", async (req, res) => {
   const { name, email, phone, password, role } = req.body;
@@ -83,11 +49,11 @@ router.post("/registerEmployee", async (req, res) => {
       role: role,
     });
     const payload = {
+      name: name,
       email: email,
-      id: result._id,
-      role: "Admin",
+      role: result.role,
     };
-    const token = jwt.sign(payload, process.env.JWT_KEY, options);
+    const token = jwt.sign(payload, process.env.JWT_KEY);
 
     res.status(201).json({
       message: "Registration Successful",
@@ -105,43 +71,15 @@ router.post("/registerEmployee", async (req, res) => {
   }
 });
 
-router.patch("/removeEmployeeById/:id", employeeMiddleware, async (req, res) => {
-  const employee = await Employee.findOne({ $and: [{ _id: req.params.id }, { isDeleted: false }] });
-    if (!employee) {
-      return res.status(400).json({
-        message: "employee not found",
-      });
-    }
-    try {
-      const deletedEmployee = await Employee.updateOne(
-        { _id: req.params.id },
-        { $set: { isDeleted: true } }
-      );
-      if (!deletedEmployee) {
-        return res.status(404).json({
-          message: "Employee not found",
-        });
-      }
-      res.set("authorization", "");
-      res.status(200).json({
-        message: "Employee deleted",
-        request: {
-          type: "POST",
-          url: "http://localhost:3000/getAllEmployees",
-        },
-      });
-    } catch (err) {
-      res.status(400).json({
-        message: "Bad request",
-        error: err
-      });
-    }
-  }
-);
-
-router.get("/getAllRemovedEmployees", employeeMiddleware, async (req, res) => {
+router.get("/getAllEmployees", middleware, async (req, res) => {
   try {
-    res.status(200).json({ message: "Operation Successful" ,employee });
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const docs = await Employee.find({ isDeleted: false });
+    res.status(200).json({ message: "Operation Successful", docs });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -149,20 +87,110 @@ router.get("/getAllRemovedEmployees", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateEmployee/:id", employeeMiddleware, async (req, res) => {
-  const employee = await Employee.findOne({ _id: req.params.id });
+router.get("/getEmployeeById/:id", middleware, async (req, res) => {
+  try {
+    if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const employee = await Employee.findOne({ _id: req.params.id });
     if (!employee) {
       return res.status(400).json({
         message: "employee not found",
       });
     }
+    res.status(200).json({
+      message: "Operation successful",
+      employee: employee,
+      request: {
+        type: "GET",
+        url: "http://localhost:3000/getAllEmployees",
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: "Bad request",
+    });
+  }
+});
+
+router.patch("/removeEmployeeById/:id", middleware, async (req, res) => {
+  if (req.userData.role !== "Admin") {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
+  }
+  const employee = await Employee.findOne({
+    $and: [{ _id: req.params.id }, { isDeleted: false }],
+  });
+  if (!employee) {
+    return res.status(400).json({
+      message: "employee not found",
+    });
+  }
+  try {
+    const deletedEmployee = await Employee.updateOne(
+      { _id: req.params.id },
+      { $set: { isDeleted: true } }
+    );
+    if (!deletedEmployee) {
+      return res.status(404).json({
+        message: "Employee not found",
+      });
+    }
+    res.set("authorization", "");
+    res.status(200).json({
+      message: "Employee deleted",
+      Deleting: employee,
+      request: {
+        type: "POST",
+        url: "http://localhost:3000/getAllEmployees",
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: "Bad request",
+      error: err,
+    });
+  }
+});
+
+router.get("/getAllRemovedEmployees", middleware, async (req, res) => {
+  try {
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const docs = await Employee.find({ isDeleted: true });
+    res.status(200).json({ message: "Operation Successful", docs });
+  } catch (err) {
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
+
+router.patch("/updateEmployee/:id", middleware, async (req, res) => {
+  if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
+  }
+  const employee = await Employee.findOne({ _id: req.params.id });
+  if (!employee) {
+    return res.status(400).json({
+      message: "employee not found",
+    });
+  }
   try {
     const setter = req.body;
     const updates = await Employee.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(200).json({ message: "Update Successful" ,Updated: updates });
+    res.status(200).json({ message: "Update Successful", Updated: setter });
   } catch {
     res.status(400).json({
       error: "Bad request",

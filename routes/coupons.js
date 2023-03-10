@@ -1,38 +1,30 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
-const {
-  authMiddleware,
-  employeeMiddleware,
-} = require("../middleware/authMiddleware");
+const middleware = require("../middleware/middleware");
 require("dotenv").config();
 
 const Coupons = require("../models/coupons");
 
-router.post("/addCoupons", employeeMiddleware, async (req, res) => {
+router.post("/addCoupons", middleware, async (req, res) => {
   try {
-    const {
-      name,
-      details,
-      code,
-      value,
-      validity_start,
-      validity_end,
-      createdBy,
-    } = req.body;
-
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const exists = req.body;
     if (
-      !name ||
-      !details ||
-      !code ||
-      !value ||
-      !validity_start ||
-      !validity_end ||
-      !createdBy
+      !exists.name ||
+      !exists.details ||
+      !exists.code ||
+      !exists.value ||
+      !exists.validity_start ||
+      !exists.validity_end ||
+      !exists.createdBy
     ) {
       return res.status(400).json({ message: "All fields are required" });
     }
-
     const result = await Coupons.create({
       _id: mongoose.Types.ObjectId(),
       name: req.body.name,
@@ -60,10 +52,19 @@ router.post("/addCoupons", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllCoupons", authMiddleware, async (req, res) => {
+router.get("/getAllCoupons", middleware, async (req, res) => {
   try {
+    if (
+      req.userData.role !== "Admin" &&
+      req.userData.role !== "Employee" &&
+      req.userData.role !== "Customer"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const result = await Coupons.find({ isDeleted: false });
-    res.status(200).json({ message : "Operation successful", result });
+    res.status(200).json({ message: "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -71,8 +72,13 @@ router.get("/getAllCoupons", authMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/removeCouponByID/:id", employeeMiddleware, async (req, res) => {
+router.patch("/removeCouponByID/:id", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const exists = await Coupons.findOne({
       $and: [{ _id: req.params.id, isDeleted: false }],
     });
@@ -91,10 +97,15 @@ router.patch("/removeCouponByID/:id", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllRemovedCoupons", employeeMiddleware, async (req, res) => {
+router.get("/getAllRemovedCoupons", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const result = await Coupons.find({ isDeleted: true });
-    res.status(200).json({ message : "Operation successful", result });
+    res.status(200).json({ message: "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -102,8 +113,13 @@ router.get("/getAllRemovedCoupons", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateCoupons/:id", employeeMiddleware, async (req, res) => {
+router.patch("/updateCoupons/:id", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const exists = await Coupons.findOne({
       $and: [{ _id: req.params.id, isDeleted: false }],
     });
@@ -111,11 +127,11 @@ router.patch("/updateCoupons/:id", employeeMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Coupons not found" });
     }
     const setter = req.body;
-    const updates = await Coupons.updateOne(
+    const updates = await Coupons.findByIdAndUpdate(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(200).json({ message: "Operation successful", Updated: updates });
+    res.status(200).json({ message: "Operation successful", Updated: setter });
   } catch {
     res.status(400).json({
       error: "Bad request",

@@ -4,21 +4,7 @@ const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const Customer = require("../models/customer");
-const {
-  employeeMiddleware,
-  authMiddleware,
-} = require("../middleware/authMiddleware");
-
-router.get("/getAllCustomers", employeeMiddleware, async (req, res) => {
-  try {
-    const docs = await Customer.find({ isDeleted: false });
-    res.status(200).json({ message: "Operation Successful" ,docs });
-  } catch (err) {
-    res.status(400).json({
-      error: "Bad request",
-    });
-  }
-});
+const middleware = require("../middleware/middleware");
 
 router.post("/registerCustomer", async (req, res) => {
   try {
@@ -43,7 +29,9 @@ router.post("/registerCustomer", async (req, res) => {
           "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character, and be at least 8 characters long",
       });
     }
-    const exists = await Customer.findOne({ $or: [{ email: email }, { phone: phone }] });
+    const exists = await Customer.findOne({
+      $or: [{ email: email }, { phone: phone }],
+    });
     if (exists) {
       return res.status(400).json({
         message: "Customer email or phone already exists",
@@ -60,11 +48,11 @@ router.post("/registerCustomer", async (req, res) => {
       phone: phone,
     });
     const payload = {
+      name: name,
       email: email,
-      id: result._id,
       role: "Customer",
     };
-    
+
     const token = jwt.sign(payload, process.env.JWT_KEY);
 
     console.log(token);
@@ -81,12 +69,36 @@ router.post("/registerCustomer", async (req, res) => {
     res.status(400).json({
       error: err,
     });
-    
   }
 });
 
-router.get("/getCustomerById/:id", authMiddleware, async (req, res) => {
+router.get("/getAllCustomers", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const docs = await Customer.find({ isDeleted: false });
+    res.status(200).json({ message: "Operation Successful", docs });
+  } catch (err) {
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
+
+router.get("/getCustomerById/:id", middleware, async (req, res) => {
+  try {
+    if (
+      req.userData.role !== "Admin" &&
+      req.userData.role !== "Employee" &&
+      req.userData.role !== "Customer"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const customer = await Customer.find({ _id: req.params.id });
     if (!customer) {
       return res.status(404).json({
@@ -103,40 +115,55 @@ router.get("/getCustomerById/:id", authMiddleware, async (req, res) => {
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
+      err,
     });
   }
 });
 
-router.patch("/removeCustomerById/:id", employeeMiddleware, async (req, res) => {
-  const customer = await Customer.findOne({ $and: [{ _id: req.params.id }, { isDeleted: false }] });
-    if (!customer) {
-      return res.status(400).json({
-        message: "customer not found",
-      });
-    }
-    try {
-      const result = await Customer.updateOne(
-        { _id: req.params.id },
-        { $set: { isDeleted: true } }
-      );
-      res.set("authorization", "");
-      res.status(200).json({
-        message: "customer deleted",
-        request: {
-          type: "POST",
-          url: "http://localhost:3000/getAllCustomer",
-        },
-      });
-    } catch (err) {
-      res.status(400).json({
-        error: "Bad request",
-      });
-    }
+router.patch("/removeCustomerById/:id", middleware, async (req, res) => {
+  if (
+    req.userData.role !== "Admin"
+  ) {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
   }
-);
-
-router.get("/getAllRemovedCustomers", employeeMiddleware, async (req, res) => {
+  const customer = await Customer.findOne({
+    $and: [{ _id: req.params.id }, { isDeleted: false }],
+  });
+  if (!customer) {
+    return res.status(400).json({
+      message: "customer not found",
+    });
+  }
   try {
+    const result = await Customer.updateOne(
+      { _id: req.params.id },
+      { $set: { isDeleted: true } }
+    );
+    res.set("authorization", "");
+    res.status(200).json({
+      message: "customer deleted",
+      Deleting: customer,
+      request: {
+        type: "POST",
+        url: "http://localhost:3000/getAllCustomer",
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      error: "Bad request",
+    });
+  }
+});
+
+router.get("/getAllRemovedCustomers", middleware, async (req, res) => {
+  try {
+    if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const docs = await Customer.find({ isDeleted: true });
     res.status(200).json({ message: "Operation Successful", docs });
   } catch (err) {
@@ -146,21 +173,32 @@ router.get("/getAllRemovedCustomers", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateCustomer/:id", authMiddleware, async (req, res) => {
-  const customer = await Customer.findOne({ $and: [{ _id: req.params.id }, { isDeleted: false }] });
-    if (!customer) {
-      return res.status(400).json({
-        message: "customer not found",
-      });
-    }
-  
+router.patch("/updateCustomer/:id", middleware, async (req, res) => {
+  if (
+    req.userData.role !== "Admin" &&
+    req.userData.role !== "Employee" &&
+    req.userData.role !== "Customer"
+  ) {
+    return res.status(403).json({
+      message: "Forbidden: Only employees can access this resource",
+    });
+  }
+  const customer = await Customer.findOne({
+    $and: [{ _id: req.params.id }, { isDeleted: false }],
+  });
+  if (!customer) {
+    return res.status(400).json({
+      message: "customer not found",
+    });
+  }
+
   try {
     const setter = req.body;
     const updates = await Customer.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(200).json({ message: "Update Successful", Updated: updates });
+    res.status(200).json({ message: "Update Successful", Updated: setter });
   } catch {
     res.status(400).json({
       error: "Bad request",

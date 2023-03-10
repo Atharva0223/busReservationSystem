@@ -1,23 +1,25 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
-const {
-  employeeMiddleware,
-  authMiddleware,
-} = require("../middleware/authMiddleware");
+const middleware = require("../middleware/middleware");
 require("dotenv").config();
 
 const Seats = require("../models/seats");
 
-router.post("/addSeats", employeeMiddleware, async (req, res) => {
+router.post("/addSeats", middleware, async (req, res) => {
   try {
-    const {seat_type,seat_fare,createdBy} = req.body;
-    if(!seat_type||!seat_fare||!createdBy){
-      return res.status(400).json({message:"All fields are required"})
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
     }
-    const exists = await Seats.findOne({seat_type:seat_type})
-    if(exists){
-      return res.status(409).json({message:"Seat already exists"})
+    const { seat_type, seat_fare, createdBy } = req.body;
+    if (!seat_type || !seat_fare || !createdBy) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    const exists = await Seats.findOne({ seat_type: seat_type });
+    if (exists) {
+      return res.status(409).json({ message: "Seat already exists" });
     }
     const result = await Seats.create({
       _id: mongoose.Types.ObjectId(),
@@ -38,8 +40,17 @@ router.post("/addSeats", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllSeats", authMiddleware, async (req, res) => {
+router.get("/getAllSeats", middleware, async (req, res) => {
   try {
+    if (
+      req.userData.role !== "Admin" &&
+      req.userData.role !== "Employee" &&
+      req.userData.role !== "Customer"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const result = await Seats.find({ isDeleted: false });
     res.status(200).json({
       "All the Seats are ": result,
@@ -55,11 +66,18 @@ router.get("/getAllSeats", authMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/removeSeatsByID/:id", employeeMiddleware, async (req, res) => {
+router.patch("/removeSeatsByID/:id", middleware, async (req, res) => {
   try {
-    const exists = await Seats.findOne({$and: [{_id:req.params.id, isDeleted:false}]})
-    if(!exists){
-      return res.status(404).json({message:"Seat not found"});
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const exists = await Seats.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Seat not found" });
     }
     const result = await Seats.findOneAndUpdate(
       { _id: req.params.id },
@@ -73,10 +91,20 @@ router.patch("/removeSeatsByID/:id", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.get("/getAllRemovedSeats", employeeMiddleware, async (req, res) => {
+router.get("/getAllRemovedSeats", middleware, async (req, res) => {
   try {
+    if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
     const result = await Seats.find({ isDeleted: true });
-    res.status(200).json({ message: "Operation Succesful", "All the removed Seats are ": result });
+    res
+      .status(200)
+      .json({
+        message: "Operation Succesful",
+        "All the removed Seats are ": result,
+      });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -84,18 +112,25 @@ router.get("/getAllRemovedSeats", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/updateSeats/:id", employeeMiddleware, async (req, res) => {
+router.patch("/updateSeats/:id", middleware, async (req, res) => {
   try {
-    const exists = await Seats.findOne({$and: [{_id: req.params.id, isDeleted: false}]});
-    if(!exists) {
-      return res.status(404).json({message:"Seat not found"});
+    if (req.userData.role !== "Admin") {
+      return res.status(403).json({
+        message: "Forbidden: Only employees can access this resource",
+      });
+    }
+    const exists = await Seats.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Seat not found" });
     }
     const setter = req.body;
     const updates = await Seats.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ message: "Update Succesful", Updated: updates });
+    res.status(201).json({ message: "Update Succesful", Updated: setter });
   } catch {
     res.status(400).json({
       error: "Bad request",
