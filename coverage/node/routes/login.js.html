@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.2% </span>
+                <span class="strong">25.58% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/39</span>
+                <span class='fraction'>11/43</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.2% </span>
+                <span class="strong">25.58% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/39</span>
+                <span class='fraction'>11/43</span>
             </div>
         
             
@@ -294,7 +294,13 @@
 <a name='L229'></a><a href='#L229'>229</a>
 <a name='L230'></a><a href='#L230'>230</a>
 <a name='L231'></a><a href='#L231'>231</a>
-<a name='L232'></a><a href='#L232'>232</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -313,6 +319,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -446,6 +455,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -542,7 +554,10 @@ const Employee = require("../models/employee");
 &nbsp;
 router.post("/employeeLogin", employeeMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
   const { email, password } = <span class="cstat-no" title="statement not covered" >req.body;</span>
-<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >  if(!email || !password){</span>
+<span class="cstat-no" title="statement not covered" >    return res.status(400).json({message: "All fields are required"});</span>
+  }
+<span class="cstat-no" title="statement not covered" >    try {</span>
     const employeeExists = <span class="cstat-no" title="statement not covered" >await Employee.findOne({ email: email });</span>
 <span class="cstat-no" title="statement not covered" >    if (employeeExists) {</span>
       const matchEmpPassword = <span class="cstat-no" title="statement not covered" >await bcrypt.compare(</span>
@@ -562,8 +577,8 @@ router.post("/employeeLogin", employeeMiddleware, <span class="fstat-no" title="
         const eToken = <span class="cstat-no" title="statement not covered" >jwt.sign(payload, process.env.JWT_KEY, options);</span>
 &nbsp;
         const decodedToken = <span class="cstat-no" title="statement not covered" >jwt.verify(eToken, process.env.JWT_KEY);</span>
-<span class="cstat-no" title="statement not covered" >        res.status(201).json({</span>
-          Message: "Login Successful",
+<span class="cstat-no" title="statement not covered" >        res.status(200).json({</span>
+          message: "Login Successful",
           Details: {
             id: employeeExists._id,
             name: employeeExists.name,
@@ -677,6 +692,9 @@ router.post("/employeeLogin", employeeMiddleware, <span class="fstat-no" title="
 &nbsp;
 router.post("/customerLogin", customerMiddleware, <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
   const { email, password } = <span class="cstat-no" title="statement not covered" >req.body;</span>
+<span class="cstat-no" title="statement not covered" >  if(!email || !password) {</span>
+<span class="cstat-no" title="statement not covered" >    return res.status(400).json({ message:"All fields are required"});</span>
+  }
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const customerExists = <span class="cstat-no" title="statement not covered" >await Customer.findOne({ email: email });</span>
 <span class="cstat-no" title="statement not covered" >    if (customerExists) {</span>
@@ -695,8 +713,8 @@ router.post("/customerLogin", customerMiddleware, <span class="fstat-no" title="
         };
         const cToken = <span class="cstat-no" title="statement not covered" >jwt.sign(payload, process.env.JWT_KEY, options);</span>
         const decodedToken = <span class="cstat-no" title="statement not covered" >jwt.verify(cToken, process.env.JWT_KEY);</span> // Verify the token
-<span class="cstat-no" title="statement not covered" >        res.status(201).json({</span>
-          Customer: "Login Successful",
+<span class="cstat-no" title="statement not covered" >        res.status(200).json({</span>
+          message: "Login Successful",
           Details: {
             id: customerExists._id,
             name: customerExists.name,
@@ -763,7 +781,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-03-09T05:23:15.418Z
+                at 2023-03-10T07:19:58.180Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
