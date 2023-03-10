@@ -1,12 +1,19 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
-const { employeeMiddleware, authMiddleware } = require("../middleware/authMiddleware");
+const {
+  employeeMiddleware,
+  authMiddleware,
+} = require("../middleware/authMiddleware");
 require("dotenv").config();
 
 const Taxes = require("../models/tax");
 
 router.post("/addTaxes", employeeMiddleware, async (req, res) => {
+  const { state_cross_tax, cgst, sgst, tolls, createdBy } = req.body;
+  if (!state_cross_tax || !cgst || !sgst || !tolls || !createdBy) {
+    res.status(400).json({ message: "All fields are required" });
+  }
   try {
     const result = await Taxes.create({
       _id: mongoose.Types.ObjectId(),
@@ -16,14 +23,7 @@ router.post("/addTaxes", employeeMiddleware, async (req, res) => {
       tolls: req.body.tolls,
       createdBy: req.body.createdBy,
     });
-    res.status(201).json({
-      "Adding tax": {
-        state_cross_tax: req.body.state_cross_tax,
-        cgst: result.cgst,
-        sgst: result.sgst,
-        tolls: result.tolls,
-      },
-    });
+    res.status(200).json({ message: "Tax Added", result: result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -34,7 +34,9 @@ router.post("/addTaxes", employeeMiddleware, async (req, res) => {
 router.get("/getAllTaxes", authMiddleware, async (req, res) => {
   try {
     const result = await Taxes.find({ isDeleted: false });
-    res.status(200).json({ "All the taxes are ": result });
+    res
+      .status(200)
+      .json({ message: "Operation Successful", "All the taxes are ": result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -44,15 +46,22 @@ router.get("/getAllTaxes", authMiddleware, async (req, res) => {
 
 router.patch("/removeTax/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Taxes.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    console.log(exists);
+    if (!exists) {
+      return res.status(404).json({ message: "Tax not found" });
+    }
     const result = await Taxes.findOneAndUpdate(
       { _id: req.params.id },
       { $set: { isDeleted: true } }
     );
-    res.status(200).json({ Removing: result, Operation: "Success" });
+    return res
+      .status(200)
+      .json({ message: "Operation Successful", Removing: result });
   } catch (err) {
-    res.status(400).json({
-      error: "Bad request",
-    });
+    return res.status(400).json({ error: "Bad request" });
   }
 });
 
@@ -68,13 +77,19 @@ router.get("/getAllremovedTaxes", employeeMiddleware, async (req, res) => {
 });
 
 router.patch("/updateTax/:id", employeeMiddleware, async (req, res) => {
+  const exists = await Taxes.findOne({
+    $and: { _id: req.params.id, isDeleted: false },
+  });
+  if(!exists) {
+    return res.status(404).json({ message:"Tax Not Found"});
+  }
   try {
     const setter = req.body;
     const updates = await Taxes.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ Updated: updates });
+    res.status(200).json({ message: "Updated Successfully", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

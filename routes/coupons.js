@@ -11,6 +11,28 @@ const Coupons = require("../models/coupons");
 
 router.post("/addCoupons", employeeMiddleware, async (req, res) => {
   try {
+    const {
+      name,
+      details,
+      code,
+      value,
+      validity_start,
+      validity_end,
+      createdBy,
+    } = req.body;
+
+    if (
+      !name ||
+      !details ||
+      !code ||
+      !value ||
+      !validity_start ||
+      !validity_end ||
+      !createdBy
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     const result = await Coupons.create({
       _id: mongoose.Types.ObjectId(),
       name: req.body.name,
@@ -41,7 +63,7 @@ router.post("/addCoupons", employeeMiddleware, async (req, res) => {
 router.get("/getAllCoupons", authMiddleware, async (req, res) => {
   try {
     const result = await Coupons.find({ isDeleted: false });
-    res.status(200).json({ result });
+    res.status(200).json({ message : "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -51,11 +73,17 @@ router.get("/getAllCoupons", authMiddleware, async (req, res) => {
 
 router.patch("/removeCouponByID/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Coupons.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Coupons not found" });
+    }
     const result = await Coupons.findOneAndUpdate(
       { _id: req.params.id },
       { $set: { isDeleted: true } }
     );
-    res.status(200).json({ result });
+    res.status(200).json({ message: "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -66,7 +94,7 @@ router.patch("/removeCouponByID/:id", employeeMiddleware, async (req, res) => {
 router.get("/getAllRemovedCoupons", employeeMiddleware, async (req, res) => {
   try {
     const result = await Coupons.find({ isDeleted: true });
-    res.status(200).json({ result });
+    res.status(200).json({ message : "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -76,12 +104,18 @@ router.get("/getAllRemovedCoupons", employeeMiddleware, async (req, res) => {
 
 router.patch("/updateCoupons/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Coupons.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Coupons not found" });
+    }
     const setter = req.body;
     const updates = await Coupons.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ Updated: updates });
+    res.status(200).json({ message: "Operation successful", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

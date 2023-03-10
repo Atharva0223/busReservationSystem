@@ -132,7 +132,8 @@ router.patch("/removeEmployeeById/:id", employeeMiddleware, async (req, res) => 
       });
     } catch (err) {
       res.status(400).json({
-        error: "Bad request",
+        message: "Bad request",
+        error: err
       });
     }
   }

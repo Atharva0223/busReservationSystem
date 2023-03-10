@@ -13,6 +13,11 @@ const Tax = require("../models/tax");
 const Coupon = require("../models/coupons");
 
 router.post("/addJourney", employeeMiddleware, async (req, res) => {
+  const { from, to, bus, tax, coupons, createdBy } = req.body;
+  if (!from || !to || !bus || !tax || !coupons || !createdBy) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
   try {
     const bus = await Bus.findById(req.body.bus);
     const tax = await Tax.findById(req.body.tax);
@@ -46,7 +51,8 @@ router.post("/addJourney", employeeMiddleware, async (req, res) => {
       createdBy: req.body.createdBy,
     });
 
-    res.status(201).json({
+    res.status(200).json({
+      message: "Operation successful",
       Journey: {
         from: journey.From,
         to: journey.To,
@@ -71,6 +77,7 @@ router.get("/getAllJourneys", authMiddleware, async (req, res) => {
       .populate("coupon");
 
     res.status(200).json({
+      message: "Operation successful",
       result: journeys,
     });
   } catch (err) {
@@ -82,6 +89,12 @@ router.get("/getAllJourneys", authMiddleware, async (req, res) => {
 
 router.patch("/removeJourneyByID/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Journey.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Journey not found" });
+    }
     const result = await Journey.findOneAndUpdate(
       { _id: req.params.id },
       { $set: { isDeleted: true } }
@@ -103,7 +116,7 @@ router.get("/getAllRemovedJourney", employeeMiddleware, async (req, res) => {
       .populate("bus")
       .populate("tax")
       .populate("coupon");
-    res.status(200).json({ result });
+    res.status(200).json({ message: "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -113,12 +126,16 @@ router.get("/getAllRemovedJourney", employeeMiddleware, async (req, res) => {
 
 router.patch("/updateJourneys/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Journey.findOne({$and: [{_id: req.params.id, isDeleted:false}]});
+    if(!exists) {
+      return res.status(404).json({message: "Journey not found"});
+    }
     const setter = req.body;
     const updates = await Journey.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ Updated: updates });
+    res.status(200).json({ message: "Operation successful", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

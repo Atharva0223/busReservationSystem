@@ -11,13 +11,21 @@ const Seats = require("../models/seats");
 
 router.post("/addSeats", employeeMiddleware, async (req, res) => {
   try {
+    const {seat_type,seat_fare,createdBy} = req.body;
+    if(!seat_type||!seat_fare||!createdBy){
+      return res.status(400).json({message:"All fields are required"})
+    }
+    const exists = await Seats.findOne({seat_type:seat_type})
+    if(exists){
+      return res.status(409).json({message:"Seat already exists"})
+    }
     const result = await Seats.create({
       _id: mongoose.Types.ObjectId(),
       seat_type: req.body.seat_type,
       seat_fare: req.body.seat_fare,
       createdBy: req.body.createdBy,
     });
-    res.status(201).json({
+    res.status(200).json({
       "Adding Seat": {
         seat_type: result.seat_type,
         seat_fare: result.seat_fare,
@@ -49,6 +57,10 @@ router.get("/getAllSeats", authMiddleware, async (req, res) => {
 
 router.patch("/removeSeatsByID/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Seats.findOne({$and: [{_id:req.params.id, isDeleted:false}]})
+    if(!exists){
+      return res.status(404).json({message:"Seat not found"});
+    }
     const result = await Seats.findOneAndUpdate(
       { _id: req.params.id },
       { $set: { isDeleted: true } }
@@ -64,7 +76,7 @@ router.patch("/removeSeatsByID/:id", employeeMiddleware, async (req, res) => {
 router.get("/getAllRemovedSeats", employeeMiddleware, async (req, res) => {
   try {
     const result = await Seats.find({ isDeleted: true });
-    res.status(200).json({ "All the removed Seats are ": result });
+    res.status(200).json({ message: "Operation Succesful", "All the removed Seats are ": result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -74,12 +86,16 @@ router.get("/getAllRemovedSeats", employeeMiddleware, async (req, res) => {
 
 router.patch("/updateSeats/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Seats.findOne({$and: [{_id: req.params.id, isDeleted: false}]});
+    if(!exists) {
+      return res.status(404).json({message:"Seat not found"});
+    }
     const setter = req.body;
     const updates = await Seats.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ Updated: updates });
+    res.status(201).json({ message: "Update Succesful", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

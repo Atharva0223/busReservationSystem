@@ -15,7 +15,10 @@ const Employee = require("../models/employee");
 
 router.post("/employeeLogin", employeeMiddleware, async (req, res) => {
   const { email, password } = req.body;
-  try {
+  if(!email || !password){
+    return res.status(400).json({message: "All fields are required"});
+  }
+    try {
     const employeeExists = await Employee.findOne({ email: email });
     if (employeeExists) {
       const matchEmpPassword = await bcrypt.compare(
@@ -35,8 +38,8 @@ router.post("/employeeLogin", employeeMiddleware, async (req, res) => {
         const eToken = jwt.sign(payload, process.env.JWT_KEY, options);
 
         const decodedToken = jwt.verify(eToken, process.env.JWT_KEY);
-        res.status(201).json({
-          Message: "Login Successful",
+        res.status(200).json({
+          message: "Login Successful",
           Details: {
             id: employeeExists._id,
             name: employeeExists.name,
@@ -150,6 +153,9 @@ router.post("/employeeLogin", employeeMiddleware, async (req, res) => {
 
 router.post("/customerLogin", customerMiddleware, async (req, res) => {
   const { email, password } = req.body;
+  if(!email || !password) {
+    return res.status(400).json({ message:"All fields are required"});
+  }
   try {
     const customerExists = await Customer.findOne({ email: email });
     if (customerExists) {
@@ -168,8 +174,8 @@ router.post("/customerLogin", customerMiddleware, async (req, res) => {
         };
         const cToken = jwt.sign(payload, process.env.JWT_KEY, options);
         const decodedToken = jwt.verify(cToken, process.env.JWT_KEY); // Verify the token
-        res.status(201).json({
-          Customer: "Login Successful",
+        res.status(200).json({
+          message: "Login Successful",
           Details: {
             id: customerExists._id,
             name: customerExists.name,

@@ -4,7 +4,8 @@ const tokens = require("../jest_config/Tokens");
 require("dotenv").config();
 
 //registeration of a customer
-describe("POST /registerCustomer", () => {  //missing fields
+describe("POST /registerCustomer", () => {
+  //missing fields
   it("should return 400 if any fields are missing", async () => {
     const res = await request(app).post("/registerCustomer").send({
       name: "",
@@ -75,77 +76,196 @@ describe("POST /registerCustomer", () => {  //missing fields
 //----------------------------------------------------------------------------------------
 //getting all the customers in our database
 describe("GET /getAllCustomers", () => {
-    //should return all employees
-    it("should return 200 with all customers", async () => {
-      const token = tokens.employeeToken;
-      const res = await request(app)
-        .get("/getAllEmployees")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.statusCode).toBe(200);
-      expect(res.body.message).toBe("Operation Successful");
-      console.log(res.body.message);
-    });
-    //unauthorized customer token
-    it("should return 403 Forbidden access", async () => {
-      const token = tokens.customerToken;
-      const res = await request(app)
-        .get(`/getAllEmployees`)
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.statusCode).toBe(403); // forbidden
-      expect(res.body.message).toBe(
-        "Forbidden: You do not have permission to access this resource"
-      );
-      console.log(res.body);
-    });
-    //unauthorized token
-    it("should return 403 Authentication failed", async () => {
-      const token = tokens.unauthorizedToken;
-      const res = await request(app)
-        .get(`/getAllEmployees`)
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.statusCode).toBe(403); // forbidden
-      expect(res.body.message).toBe("Authentication failed");
-      console.log(res.body);
-    });
-    //Token no provided
-    it("should return 403 no token", async () => {
-      const res = await request(app).get(`/getAllEmployees`);
-      expect(res.statusCode).toBe(403); // forbidden
-      expect(res.body.message).toBe("Authentication failed");
-      console.log(res.body);
-    });  
+  //should return all customers
+  it("should return 200 with all customers", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .get("/getAllCustomers")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Operation Successful");
+    console.log(res.body.message);
+  });
+  //unauthorized token
+  it("should return 403 Authentication failed", async () => {
+    const token = tokens.unauthorizedToken;
+    const res = await request(app)
+      .get(`/getAllCustomers`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //customer token no access
+  it("should return 403 Authentication failed", async () => {
+    const token = tokens.customerToken;
+    const res = await request(app)
+      .get(`/getAllCustomers`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe(
+      "Forbidden: You do not have permission to access this resource"
+    );
+    console.log(res.body);
+  });
+  //Token no provided
+  it("should return 403 no token", async () => {
+    const res = await request(app).get(`/getAllCustomers`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
 });
 
 //----------------------------------------------------------------------------------------
-// describe("PATCH /removeCustomerById/:id", () => {
-//   it("should remove one customer by id", async () => {
-//     const token = tokens.employeeToken;
-//     const res = await request(app)
-//     .patch("/removeCustomerById/6405c34c925e2181f7cae6d2")
-//     .set("Authorization", `Bearer ${token}`);
-//     expect(res.statusCode).toBe(200);
-//   });
-// });
+describe("PATCH /removeCustomerById/:id", () => {
+  //check if customer exists
+  it("should check if customer exists before deleting", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .patch("/removeCustomerById/64082160f75ecf85b39feabc")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe("customer not found");
+    console.log(res.body);
+  });
+  //check if token is valid
+  it("should check if token is valid", async () => {
+    const token = tokens.unauthorizedToken;
+    const res = await request(app)
+      .patch("/removeCustomerById/64082160f75ecf85b39feccc")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //check if token is not of customner
+  it("should check if token is authorized", async () => {
+    const token = tokens.customerToken;
+    const res = await request(app)
+      .patch("/removeCustomerById/64082160f75ecf85b39feccc")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe(
+      "Forbidden: You do not have permission to access this resource"
+    );
+    console.log(res.body);
+  });
+  //check if token is passed or not
+  it("should check if token is passed or not", async () => {
+    const res = await request(app).patch(
+      "/removeCustomerById/64082160f75ecf85b39feccc"
+    );
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //removing the customer from the database
+  it("removing the customer", async () => {
+    const token = tokens.employeeToken;
+    const res = await request(app)
+      .patch("/removeCustomerById/64082160f75ecf85b39feccc")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("customer deleted");
+    console.log(res.body);
+  });
+});
 
+//----------------------------------------------------------------------------------------
+//Get removed customers
 describe("GET /getAllRemovedCustomers", () => {
-  it("should show all the removed customer", async () => {
+  //should return all employees
+  it("should return 200 with all removed customers", async () => {
     const token = tokens.employeeToken;
     const res = await request(app)
       .get("/getAllRemovedCustomers")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe("Operation Successful");
+    console.log(res.body.message);
+  });
+  //unauthorized customer token
+  it("should return 403 Forbidden access", async () => {
+    const token = tokens.customerToken;
+    const res = await request(app)
+      .get(`/getAllRemovedCustomers`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe(
+      "Forbidden: You do not have permission to access this resource"
+    );
+    console.log(res.body);
+  });
+  //unauthorized token
+  it("should return 403 Authentication failed", async () => {
+    const token = tokens.unauthorizedToken;
+    const res = await request(app)
+      .get(`/getAllRemovedCustomers`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
+  });
+  //Token no provided
+  it("should return 403 no token", async () => {
+    const res = await request(app).get(`/getAllRemovedCustomers`);
+    expect(res.statusCode).toBe(403); // forbidden
+    expect(res.body.message).toBe("Authentication failed");
+    console.log(res.body);
   });
 });
 
-// describe("PATCH /updateCustomer/:id", () => {
-//   it("updating a customer", async () => {
-//     const token = tokens.employeeToken;
-//     const res = await request(app)
-//       .patch("/updateCustomer/64057452b8f01219592d8ad4")
-//       .set("Authorization", `Bearer ${token}`)
-//       .send({
-//         address: "Antartica",
-//       });
-//     expect(res.statusCode).toBe(201);
-//   });
-// });
+//----------------------------------------------------------------------------------------
+//updating customers
+describe("PATCH /updateCustomer/:id", () => {
+//check if customer exists
+it("should check if customer exists before deleting", async () => {
+  const token = tokens.customerToken;
+  const res = await request(app)
+    .patch("/updateCustomer/64096cfa1911a2568cdeb6d0")
+    .set("Authorization", `Bearer ${token}`);
+  expect(res.statusCode).toBe(400);
+  expect(res.body.message).toBe("customer not found");
+  console.log(res.body);
+});
+//updating customer name with employee token
+it("should update name of one customer by id", async () => {
+  const token = tokens.employeeToken;
+  const res = await request(app)
+    .patch("/updateCustomer/64096cfa1911a2568ceeb6d0")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      name: "John Cena",
+    });
+  expect(res.statusCode).toBe(200);
+  expect(res.body.message).toBe("Update Successful");
+  console.log(res.body);
+});
+//updating customer address with customer token
+it("should update address of one customer by id", async () => {
+  const token = tokens.customerToken;
+  const res = await request(app)
+    .patch("/updateCustomer/64096cfa1911a2568ceeb6d0")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      address: "New York"
+    });
+  expect(res.statusCode).toBe(200);
+  expect(res.body.message).toBe("Update Successful");
+  console.log(res.body);
+});
+//updating a customer by id with invalid token
+it("should update one customer by id", async () => {
+  const token = tokens.unauthorizedToken;
+  const res = await request(app)
+    .patch("/updateCustomer/64096cfa1911a2568ceeb6d0")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      name: "unauthorized token",
+    });
+  expect(res.statusCode).toBe(403);
+  expect(res.body.message).toBe("Authentication failed");
+  console.log(res.body);
+});
+});

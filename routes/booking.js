@@ -11,6 +11,10 @@ const {
 
 router.post("/booking", authMiddleware, async (req, res) => {
   const book = req.body;
+  const { customer, journey, passengers, bus, createdBy } = req.body;
+  if (!customer || !passengers || !journey || !bus || !createdBy) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
   try {
     const journey = await Journey.findById(book.journey).populate({
       path: "bus",
@@ -43,7 +47,8 @@ router.post("/booking", authMiddleware, async (req, res) => {
     });
 
     const result = await booking.save();
-    res.status(201).json({
+    res.status(200).json({
+      message: "Operation successful",
       booking: result,
     });
   } catch (err) {
@@ -56,7 +61,7 @@ router.post("/booking", authMiddleware, async (req, res) => {
 router.get("/getAllBookings", employeeMiddleware, async (req, res) => {
   try {
     const docs = await Booking.find({ isDeleted: false });
-    res.status(200).json({ docs });
+    res.status(200).json({ message: "Operation successful", docs });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -66,15 +71,16 @@ router.get("/getAllBookings", employeeMiddleware, async (req, res) => {
 
 router.patch("/cancelBookingById/:id", authMiddleware, async (req, res) => {
   try {
+    const exists = await Booking.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
     const deletedBooking = await Booking.updateOne(
       { _id: req.params.id },
       { $set: { isDeleted: true } }
     );
-    if (!deletedBooking) {
-      return res.status(404).json({
-        message: "Booking not found",
-      });
-    }
     res.status(200).json({
       message: "Booking deleted",
     });
@@ -88,7 +94,7 @@ router.patch("/cancelBookingById/:id", authMiddleware, async (req, res) => {
 router.get("/getAllcanceledBookings", employeeMiddleware, async (req, res) => {
   try {
     const docs = await Booking.find({ isDeleted: true });
-    res.status(200).json({ docs });
+    res.status(200).json({ message : "Operation successful", docs });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -98,6 +104,12 @@ router.get("/getAllcanceledBookings", employeeMiddleware, async (req, res) => {
 
 router.patch("/updateBooking/:id", authMiddleware, async (req, res) => {
   try {
+    const exists = await Booking.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
     const setter = req.body;
     const updates = await Booking.updateOne(
       { _id: req.params.id },

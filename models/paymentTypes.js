@@ -31,4 +31,4 @@ paymentTypeSchema.set("toJSON", {
   versionKey: false,
 });
 
-module.exports = mongoose.model("Payment_Type", paymentTypeSchema);
+module.exports = mongoose.model("PaymentType", paymentTypeSchema);

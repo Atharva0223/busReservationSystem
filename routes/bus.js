@@ -12,10 +12,32 @@ const Seats = require("../models/seats");
 
 router.post("/addBus", employeeMiddleware, async (req, res) => {
   try {
+    const {
+      name,
+      plate,
+      type_of_bus,
+      capacity,
+      available_seats,
+      seats,
+      working_days,
+      createdBy,
+    } = req.body;
+    if(
+      !name ||
+      !plate ||
+      !type_of_bus ||
+      !capacity ||
+      !available_seats ||
+      !seats ||
+      !working_days ||
+      !createdBy
+    ){
+      return res.status(400).json({message:"All fields are required"});
+    }
     const buses = await Bus.findOne({ plate: req.body.plate });
     if (buses) {
-      return res.status(404).json({
-        message: "Cannot add bus plate already exists",
+      return res.status(409).json({
+        message: "Bus already exists",
       });
     }
 
@@ -32,7 +54,7 @@ router.post("/addBus", employeeMiddleware, async (req, res) => {
     });
 
     const result = await bus.save();
-    res.status(201).json({ result });
+    res.status(201).json({ message: "Operation successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -44,7 +66,7 @@ router.get("/getAllBuses", async (req, res) => {
   try {
     const buses = await Bus.find({ isDeleted: false }).populate("seats");
 
-    res.status(200).json({ buses });
+    res.status(200).json({ message : "Operation successful", buses });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -86,12 +108,18 @@ router.get("/getBusById/:id", employeeMiddleware, async (req, res) => {
 
 router.patch("/removeBus/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Bus.findOne({ $and:[{_id:req.params.id,isDeleted:false}] });
+    if (!exists) {
+      return res.status(404).json({
+        message: "Bus not found",
+      });
+    }
     const result = await Bus.findByIdAndUpdate(req.params.id, {
       $set: { isDeleted: true },
     });
     res.status(200).json({
+      message: "Operation sucessful",
       "Removing this Bus from collection": result,
-      Operation: "Sucess",
     });
   } catch {
     res.status(400).json({
@@ -103,7 +131,7 @@ router.patch("/removeBus/:id", employeeMiddleware, async (req, res) => {
 router.get("/getAllRemovedBuses", employeeMiddleware, async (req, res) => {
   try {
     const docs = await Bus.find({ isDeleted: true });
-    res.status(200).json({ docs });
+    res.status(200).json({ message : "Operation successful", docs });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -113,12 +141,18 @@ router.get("/getAllRemovedBuses", employeeMiddleware, async (req, res) => {
 
 router.patch("/updateBus/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Bus.findOne({ $and:[{_id:req.params.id,isDeleted:false}] });
+    if (!exists) {
+      return res.status(404).json({
+        message: "Bus not found",
+      });
+    }
     const setter = req.body;
     const updates = await Bus.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ Updated: updates });
+    res.status(200).json({ message: "Operation successful", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

@@ -12,13 +12,28 @@ const Booking = require("../models/booking");
 
 router.post("/addPayment", authMiddleware, async (req, res) => {
   try {
-    const booking = await Booking.findById(req.body.booking);
-    if (!booking) {
-      return res.status(404).json({
+    //find booking
+    const book = await Booking.findById(req.body.booking);
+    if (!book) {
+      return res.status(409).json({
         message: "Booking not found",
       });
     }
-    const fare = booking.fare;
+    //all fields are required
+    const { booking, payment_types, createdBy } = req.body;
+    if (!booking || !payment_types || !createdBy) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    //if payment already exists
+    const exists = await Payments.findOne({
+      $and: [{ booking: res.body.booking, createdBy: res.body.createdBy }],
+    });
+    if (!exists) {
+      return res.statusCode(409).json({ message: "Payment already exists" });
+    }
+
+    const fare = book.fare;
 
     const result = await Payments.create({
       _id: mongoose.Types.ObjectId(),
@@ -28,8 +43,9 @@ router.post("/addPayment", authMiddleware, async (req, res) => {
       createdBy: req.body.createdBy,
     });
 
-    res.status(201).json({
+    res.status(200).json({
       result: {
+        message: "Operation successful",
         _id: result._id,
         booking: result.booking,
         payment_types: result.payment_types,
@@ -38,7 +54,7 @@ router.post("/addPayment", authMiddleware, async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
-      error: "Bad request",
+      message: "Bad request",
     });
   }
 });
@@ -54,8 +70,17 @@ router.get("/getAllPayments", employeeMiddleware, async (req, res) => {
   }
 });
 
-router.patch("/removePaymentsByID/:id", employeeMiddleware, async (req, res) => {
+router.patch(
+  "/removePaymentsByID/:id",
+  employeeMiddleware,
+  async (req, res) => {
     try {
+      const exists = await Payments.findOne({
+        $and: [{_id: req.params.id, isDeleted: false}],
+      });
+      if (!exists) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
       const result = await Payments.findOneAndUpdate(
         { _id: req.params.id },
         { $set: { isDeleted: true } }
@@ -72,7 +97,7 @@ router.patch("/removePaymentsByID/:id", employeeMiddleware, async (req, res) => 
 router.get("/getAllRemovedPayments", employeeMiddleware, async (req, res) => {
   try {
     const result = await Payments.find({ isDeleted: true });
-    res.status(200).json({ result });
+    res.status(200).json({ message: "Operation Successful", result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -82,12 +107,16 @@ router.get("/getAllRemovedPayments", employeeMiddleware, async (req, res) => {
 
 router.patch("/updatePayments/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Payments.findOne({$and: [ {id: req.params.id, isDeleted: false} ]});
+    if(!exists) {
+      return res.status(404).json({message:"Payment not found"});
+    }
     const setter = req.body;
     const updates = await Payments.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(200).json({ Updated: updates });
+    res.status(200).json({ message: "Operation successful", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

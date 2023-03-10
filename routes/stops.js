@@ -11,13 +11,22 @@ const Stops = require("../models/stops");
 
 router.post("/addStops", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Stops.findOne({
+      $and: [
+        { stop_name: req.body.stop_name, stop_state: req.body.stop_state },
+      ],
+    });
+    if (exists) {
+      res.status(409).json({ message: "Stop already exists" });
+    }
     const result = await Stops.create({
       _id: mongoose.Types.ObjectId(),
       stop_name: req.body.stop_name,
       stop_state: req.body.stop_state,
       createdBy: req.body.createdBy,
     });
-    res.status(201).json({
+    res.status(200).json({
+      message: "Operation Successful",
       "Adding stop": {
         stop_name: req.body.stop_name,
         stop_state: req.body.stop_state,
@@ -34,6 +43,7 @@ router.get("/getAllStops", authMiddleware, async (req, res) => {
   try {
     const result = await Stops.find({ isDeleted: false });
     res.status(200).json({
+      message: "Operation Successful",
       "All the stops are ": result,
       request: {
         method: "POST",
@@ -49,14 +59,21 @@ router.get("/getAllStops", authMiddleware, async (req, res) => {
 
 router.patch("/removeStopByID/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Stops.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if (!exists) {
+      return res.status(404).json({ message: "Stop not found" });
+    }
     const result = await Stops.findOneAndUpdate(
       { _id: req.params.id },
       { $set: { isDeleted: true } }
     );
-    res.status(200).json({ Removing: result, Operation: "Success" });
+    res.status(200).json({ message: "Operation Successful", Removing: result });
   } catch (err) {
     res.status(400).json({
-      error: "Bad request",
+      message: "Bad request",
+      error: err,
     });
   }
 });
@@ -64,7 +81,12 @@ router.patch("/removeStopByID/:id", employeeMiddleware, async (req, res) => {
 router.get("/getAllRemovedStops", employeeMiddleware, async (req, res) => {
   try {
     const result = await Stops.find({ isDeleted: true });
-    res.status(200).json({ "All the removed stops are ": result });
+    res
+      .status(200)
+      .json({
+        message: "Operation Successful",
+        "All the removed stops are ": result,
+      });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -74,12 +96,18 @@ router.get("/getAllRemovedStops", employeeMiddleware, async (req, res) => {
 
 router.patch("/updateStops/:id", employeeMiddleware, async (req, res) => {
   try {
+    const exists = await Stops.findOne({
+      $and: [{ _id: req.params.id, isDeleted: false }],
+    });
+    if(!exists){
+      return res.status(404).json({ message: "Stop not found"});
+    }
     const setter = req.body;
     const updates = await Stops.updateOne(
       { _id: req.params.id },
       { $set: setter }
     );
-    res.status(201).json({ Updated: updates });
+    res.status(200).json({ message: "Update Successful", Updated: updates });
   } catch {
     res.status(400).json({
       error: "Bad request",

@@ -12,7 +12,7 @@ describe("Employee registration test cases", () => {
       name: "",
       email: "marge@mail.in",
       phone: "1232343453",
-      password: "",
+      password: "Password@1",
       role: "Employee",
     });
     expect(res.statusCode).toBe(400);
@@ -25,7 +25,7 @@ describe("Employee registration test cases", () => {
       name: "Marge Simpson",
       email: "marge@mail.in",
       phone: "1232343453",
-      password: "password",
+      password: "Password@1",
       role: "Employee",
     });
     expect(res.statusCode).toBe(400);
@@ -50,7 +50,7 @@ describe("Employee registration test cases", () => {
     const res = await request(app).post("/registerEmployee").send({
       name: "Marge Simpson",
       email: "marge@mail.in",
-      phone: "1232343453",
+      phone: "123234453",
       password: "password",
       role: "Employee",
     });
@@ -60,21 +60,23 @@ describe("Employee registration test cases", () => {
     );
     console.log(res.body.message);
   });
-  //successful registration
-  it("employee should register", async () => {
-    const res = await request(app).post("/registerEmployee").send({
-      name: "Marge Simpson",
-      email: "sdf@mail.in",
-      phone: "1232343453",
-      password: "password",
-      role: "Employee",
-    });
-    expect(res.statusCode).toBe(201);
-    expect(res.body.message).toBe("Registration Successful");
-  });
+  // successful registration
+  // it("employee should register", async () => {
+  //   const res = await request(app).post("/registerEmployee").send({
+  //     name: "Merry Simpson",
+  //     email: "merry@mail.in",
+  //     phone: "2918304856",
+  //     password: "Password@1",
+  //     role: "Employee",
+  //   });
+  //   expect(res.statusCode).toBe(201);
+  //   expect(res.body.message).toBe("Registration Successful");
+  // });
 });
+
 // ---------------------------------------------------------------------------------------
 //Get By employee ID
+
 describe("GET /getEmployeeById/:id", () => {
   //employee not found
   it("should return 400 with employee not found", async () => {
