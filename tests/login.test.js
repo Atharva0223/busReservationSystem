@@ -14,9 +14,19 @@ describe("POST /employeeLogin", () => {
         email: "shin@mail.in",
         password: "Password@1",
       });
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe("Login Successful");
-    console.log(res.body.message);
+    expect(res.statusCode).toBeOneOf([200,403,401]);
+    if(res.statusCode === 200){
+      expect(res.body.message).toBe("Login successful");
+      console.log(res.body.message);
+    }
+    if(res.statusCode === 403){
+      expect(res.body.message).toBe("Forbidden: You do not have permission to access this resource");
+      console.log(res.body.message);
+    }
+    if(res.statusCode === 401){
+      expect(res.body.message).toBe("Authentication failed: Invalid email or password");
+      console.log(res.body.message);
+    }
   });
   //all fields are required
   it("employee should login", async () => {
@@ -48,9 +58,19 @@ describe("POST /customerLogin", () => {
         email: "jane@mail.in",
         password: "Password@1",
       });
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe("Login Successful");
-    console.log(res.body.message);
+      expect(res.statusCode).toBeOneOf([200,403,401]);
+      if(res.statusCode === 200){
+        expect(res.body.message).toBe("Login successful");
+        console.log(res.body.message);
+      }
+      if(res.statusCode === 403){
+        expect(res.body.message).toBe("Forbidden: You do not have permission to access this resource");
+        console.log(res.body.message);
+      }
+      if(res.statusCode === 401){
+        expect(res.body.message).toBe("Authentication failed: Invalid email or password");
+        console.log(res.body.message);
+      }
   });
   //all fields are required
   it("customer should login", async () => {

@@ -96,7 +96,7 @@ describe("GET /getEmployeeById/:id", () => {
   it("should return 200 with employee by id", async () => {
     const token = tokens.employeeToken;
     const res = await request(app)
-      .get("/getEmployeeById/640824b0d296c710c3235837")
+      .get("/getEmployeeById/640b18e653edb45d97241e6c")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe("Operation successful");
