@@ -10,7 +10,7 @@ router.post("/addSeats", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const { seat_type, seat_fare, createdBy } = req.body;
@@ -28,6 +28,7 @@ router.post("/addSeats", middleware, async (req, res) => {
       createdBy: req.body.createdBy,
     });
     res.status(200).json({
+      message: "Operation successful",
       "Adding Seat": {
         seat_type: result.seat_type,
         seat_fare: result.seat_fare,
@@ -48,7 +49,7 @@ router.get("/getAllSeats", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Seats.find({ isDeleted: false });
@@ -70,7 +71,7 @@ router.patch("/removeSeatsByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Seats.findOne({
@@ -83,7 +84,7 @@ router.patch("/removeSeatsByID/:id", middleware, async (req, res) => {
       { _id: req.params.id },
       { $set: { isDeleted: true } }
     );
-    res.status(200).json({ Removing: result, Operation: "Success" });
+    res.status(200).json({ message: "Operation Successful", Removing: result });
   } catch (err) {
     res.status(400).json({
       error: "Bad request",
@@ -95,7 +96,7 @@ router.get("/getAllRemovedSeats", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Seats.find({ isDeleted: true });
@@ -116,7 +117,7 @@ router.patch("/updateSeats/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Seats.findOne({

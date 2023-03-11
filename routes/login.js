@@ -13,7 +13,7 @@ const Employee = require("../models/employee");
 router.post("/employeeLogin", middleware, async (req, res) => {
   if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const { email, password } = req.body;
@@ -156,7 +156,7 @@ router.post("/employeeLogin", middleware, async (req, res) => {
 router.post("/customerLogin", middleware, async (req, res) => {
   if (req.userData.role !== "Customer") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const { email, password } = req.body;

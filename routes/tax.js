@@ -9,13 +9,28 @@ const Taxes = require("../models/tax");
 router.post("/addTaxes", middleware, async (req, res) => {
   if (req.userData.role !== "Admin") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const { state_cross_tax, cgst, sgst, tolls, createdBy } = req.body;
   if (!state_cross_tax || !cgst || !sgst || !tolls || !createdBy) {
-    res.status(400).json({ message: "All fields are required" });
+    return res.status(400).json({ message: "All fields are required" });
   }
+
+  const exists = await Taxes.find({
+    $and: [
+      {
+        state_cross_tax: req.body.state_cross_tax,
+        cgst: req.body.cgst,
+        sgst: req.body.sgst,
+        tolls: req.body.tolls,
+      },
+    ],
+  });
+  if (exists) {
+    return res.status(409).json({ message: "Tax already exists" });
+  }
+  
   try {
     const result = await Taxes.create({
       _id: mongoose.Types.ObjectId(),
@@ -41,7 +56,8 @@ router.get("/getAllTaxes", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Taxes.find({ isDeleted: false });
@@ -59,7 +75,8 @@ router.patch("/removeTax/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Taxes.findOne({
@@ -85,7 +102,8 @@ router.get("/getAllremovedTaxes", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Taxes.find({ isDeleted: true });
@@ -100,7 +118,7 @@ router.get("/getAllremovedTaxes", middleware, async (req, res) => {
 router.patch("/updateTax/:id", middleware, async (req, res) => {
   if (req.userData.role !== "Admin") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const exists = await Taxes.findOne({

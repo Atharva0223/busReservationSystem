@@ -10,7 +10,7 @@ router.post("/addPaymentTypes", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const check = req.body;
@@ -21,7 +21,7 @@ router.post("/addPaymentTypes", middleware, async (req, res) => {
       $and: [{ paymentMode: check.paymentMode, isDeleted: false }],
     });
     if (exists) {
-      return res.status(409).json({ message: "Payment already exists" });
+      return res.status(409).json({ message: "Payment type already exists" });
     }
     const result = await PaymentType.create({
       _id: mongoose.Types.ObjectId(),
@@ -29,7 +29,7 @@ router.post("/addPaymentTypes", middleware, async (req, res) => {
       createdBy: req.body.createdBy,
     });
     res.status(200).json({
-      message: "Operation Successful",
+      message: "Operation successful",
       "Payment Types are": {
         result
       },
@@ -49,7 +49,7 @@ router.get("/getAllPaymentTypes", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await PaymentType.find({ isDeleted: false });
@@ -65,7 +65,7 @@ router.patch("/removePaymentTypeByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await PaymentType.findOne({
@@ -90,7 +90,7 @@ router.get("/getAllRemovedPaymentTypes", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await PaymentType.find({ isDeleted: true });
@@ -106,7 +106,7 @@ router.patch("/updatePaymentTypes/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await PaymentType.findOne({

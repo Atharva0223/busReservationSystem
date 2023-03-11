@@ -11,7 +11,7 @@ router.post("/addBus", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = req.body;
@@ -63,7 +63,7 @@ router.get("/getAllBuses",middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const buses = await Bus.find({ isDeleted: false }).populate("seats");
@@ -84,7 +84,7 @@ router.get("/getBusById/:id", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const buses = await Bus.find({ _id: req.params.id }).populate(
@@ -121,7 +121,7 @@ router.patch("/removeBus/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Bus.findOne({
@@ -150,7 +150,7 @@ router.get("/getAllRemovedBuses", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Bus.find({ isDeleted: true });
@@ -166,7 +166,7 @@ router.patch("/updateBus/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Bus.findOne({

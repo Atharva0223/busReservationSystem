@@ -33,7 +33,7 @@ router.post("/registerCustomer", async (req, res) => {
       $or: [{ email: email }, { phone: phone }],
     });
     if (exists) {
-      return res.status(400).json({
+      return res.status(409).json({
         message: "Customer email or phone already exists",
       });
     }
@@ -76,7 +76,7 @@ router.get("/getAllCustomers", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Customer.find({ isDeleted: false });
@@ -96,7 +96,7 @@ router.get("/getCustomerById/:id", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const customer = await Customer.find({ _id: req.params.id });
@@ -125,14 +125,14 @@ router.patch("/removeCustomerById/:id", middleware, async (req, res) => {
     req.userData.role !== "Admin"
   ) {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const customer = await Customer.findOne({
     $and: [{ _id: req.params.id }, { isDeleted: false }],
   });
   if (!customer) {
-    return res.status(400).json({
+    return res.status(404).json({
       message: "customer not found",
     });
   }
@@ -161,7 +161,7 @@ router.get("/getAllRemovedCustomers", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Customer.find({ isDeleted: true });
@@ -180,14 +180,14 @@ router.patch("/updateCustomer/:id", middleware, async (req, res) => {
     req.userData.role !== "Customer"
   ) {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const customer = await Customer.findOne({
     $and: [{ _id: req.params.id }, { isDeleted: false }],
   });
   if (!customer) {
-    return res.status(400).json({
+    return res.status(404).json({
       message: "customer not found",
     });
   }

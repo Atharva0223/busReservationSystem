@@ -15,9 +15,15 @@ router.post("/addPayment", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
+     //all fields are required
+     const { booking, payment_types, createdBy } = req.body;
+     if (!booking || !payment_types || !createdBy) {
+       return res.status(400).json({ message: "All fields are required" });
+     }
+     
     //find booking
     const book = await Booking.findById(req.body.booking);
     if (!book) {
@@ -25,11 +31,7 @@ router.post("/addPayment", middleware, async (req, res) => {
         message: "Booking not found",
       });
     }
-    //all fields are required
-    const { booking, payment_types, createdBy } = req.body;
-    if (!booking || !payment_types || !createdBy) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+   
 
     //if payment already exists
     const exists = await Payments.findOne({
@@ -70,7 +72,7 @@ router.get("/getAllPayments", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Payments.find({ isDeleted: false });
@@ -86,7 +88,7 @@ router.patch("/removePaymentsByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Payments.findOne({
@@ -111,7 +113,7 @@ router.get("/getAllRemovedPayments", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Payments.find({ isDeleted: true });
@@ -127,7 +129,7 @@ router.patch("/updatePayments/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Payments.findOne({

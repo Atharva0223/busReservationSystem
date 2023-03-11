@@ -10,20 +10,34 @@ router.post("/addCoupons", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
-    const exists = req.body;
+    const check = req.body;
     if (
-      !exists.name ||
-      !exists.details ||
-      !exists.code ||
-      !exists.value ||
-      !exists.validity_start ||
-      !exists.validity_end ||
-      !exists.createdBy
+      !check.name ||
+      !check.details ||
+      !check.code ||
+      !check.value ||
+      !check.validity_start ||
+      !check.validity_end ||
+      !check.createdBy
     ) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+    const exists = await Coupons.find({
+      $or: [
+        {
+          name: check.name,
+          code: check.code,
+          value: check.value,
+          createdBy: check.createdBy,
+        },
+      ],
+    });
+    if(exists){
+      return res.status(409).json({message: "Coupon already exists"});
     }
     const result = await Coupons.create({
       _id: mongoose.Types.ObjectId(),
@@ -60,7 +74,8 @@ router.get("/getAllCoupons", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Coupons.find({ isDeleted: false });
@@ -76,7 +91,8 @@ router.patch("/removeCouponByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Coupons.findOne({
@@ -101,7 +117,8 @@ router.get("/getAllRemovedCoupons", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Coupons.find({ isDeleted: true });
@@ -117,7 +134,8 @@ router.patch("/updateCoupons/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Coupons.findOne({

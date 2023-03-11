@@ -12,14 +12,19 @@ const Coupon = require("../models/coupons");
 router.post("/addJourney", middleware, async (req, res) => {
   if (req.userData.role !== "Admin") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const { from, to, bus, tax, coupons, createdBy } = req.body;
   if (!from || !to || !bus || !tax || !coupons || !createdBy) {
     return res.status(400).json({ message: "All fields are required" });
   }
-
+  const exists = await Journey.find({
+    $and: [{ From: req.body.from, To: req.body.to, bus: req.body.bus }],
+  });
+  if(exists){
+    return res.status(409).json({ message:"Journey already exists"});
+  }
   try {
     const bus = await Bus.findById(req.body.bus);
     const tax = await Tax.findById(req.body.tax);
@@ -79,7 +84,8 @@ router.get("/getAllJourneys", middleware, async (req, res) => {
       req.userData.role !== "Admin"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const journeys = await Journey.find({ isDeleted: false })
@@ -102,7 +108,8 @@ router.patch("/removeJourneyByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Journey.findOne({
@@ -130,7 +137,8 @@ router.get("/getAllRemovedJourney", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Journey.find({ isDeleted: true })
@@ -149,7 +157,8 @@ router.patch("/updateJourneys/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message:
+          "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Journey.findOne({

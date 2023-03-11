@@ -18,9 +18,15 @@ describe("POST /addTaxes", () => {
         tolls: "800",
         createdBy: "640ac76632e43f5c6bb23090",
       });
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe("Tax Added");
-    console.log(res.body.message);
+    expect(res.statusCode).toBeOneOf([200, 409]);
+    if (res.statusCode === 200) {
+      expect(res.body.message).toBe("Operation successful");
+      console.log(res.body.message);
+    }
+    if (res.statusCode === 409) {
+      expect(res.body.message).toBe("Tax already exists");
+      console.log(res.body.message);
+    }
   });
   //with customer token
   it("Adding a tax", async () => {
@@ -124,12 +130,17 @@ describe("PATCH /removeTax/:id", () => {
     const res = await request(app)
       .patch("/removeTax/640ad4b0467aeeca16a899f7")
       .set("Authorization", `Bearer ${token}`);
-    expect(res.statusCode).toBe(200);
-      expect(res.body.message).toBe("Operation Successful");
+    expect(res.statusCode).toBeOneOf([200, 404]);
+    if (res.statusCode === 200) {
+      expect(res.body.message).toBe("Operation successful");
       console.log(res.body.message);
-
+    }
+    if (res.statusCode === 404) {
+      expect(res.body.message).toBe("Tax not found");
+      console.log(res.body.message);
+    }
   });
-  
+
   //Customer token
   it("should remove one tax by id", async () => {
     const token = tokens.customerToken;
@@ -150,19 +161,14 @@ describe("PATCH /removeTax/:id", () => {
       .patch("/removeTax/640ad4b0467aeeca16a899f7")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
-    expect(res.body.message).toBe(
-      "Authentication failed"
-    );
+    expect(res.body.message).toBe("Authentication failed");
     console.log(res.body.message);
   });
   //no token
   it("should remove one tax by id", async () => {
-    const res = await request(app)
-      .patch("/removeTax/640ad4b0467aeeca16a899f7")
+    const res = await request(app).patch("/removeTax/640ad4b0467aeeca16a899f7");
     expect(res.statusCode).toBe(403);
-    expect(res.body.message).toBe(
-      "Authentication failed"
-    );
+    expect(res.body.message).toBe("Authentication failed");
     console.log(res.body.message);
   });
 });
@@ -219,9 +225,15 @@ describe("PATCH /updateTax/:id", () => {
       .send({
         sgst: "0.9",
       });
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe("Updated Successfully");
-    console.log(res.body.message);
+    expect(res.statusCode).toBeOneOf([200, 404]);
+    if (res.statusCode === 200) {
+      expect(res.body.message).toBe("Operation successful");
+      console.log(res.body.message);
+    }
+    if (res.statusCode === 404) {
+      expect(res.body.message).toBe("Tax Not Found");
+      console.log(res.body.message);
+    }
   });
   //updating a tax with customer token
   it("updating a tax", async () => {

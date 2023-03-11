@@ -10,7 +10,7 @@ router.post("/addJourneyStops", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await JourneyStops.findOne({
@@ -48,7 +48,7 @@ router.get("/getAllJourneyStops", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const journeyStops = await JourneyStops.find({ isDeleted: false });
@@ -66,7 +66,7 @@ router.patch("/removeJourneyStopsByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await JourneyStops.findOne({
@@ -91,7 +91,7 @@ router.get("/getAllRemovedJourneyStops", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await JourneyStops.find({ isDeleted: true });

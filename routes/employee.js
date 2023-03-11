@@ -35,7 +35,7 @@ router.post("/registerEmployee", async (req, res) => {
       $or: [{ email: email }, { phone: phone }],
     });
     if (exists) {
-      return res.status(400).json({
+      return res.status(409).json({
         message: "Employee email or phone already exists",
       });
     }
@@ -75,7 +75,7 @@ router.get("/getAllEmployees", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Employee.find({ isDeleted: false });
@@ -91,7 +91,7 @@ router.get("/getEmployeeById/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const employee = await Employee.findOne({ _id: req.params.id });
@@ -118,14 +118,14 @@ router.get("/getEmployeeById/:id", middleware, async (req, res) => {
 router.patch("/removeEmployeeById/:id", middleware, async (req, res) => {
   if (req.userData.role !== "Admin") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const employee = await Employee.findOne({
     $and: [{ _id: req.params.id }, { isDeleted: false }],
   });
   if (!employee) {
-    return res.status(400).json({
+    return res.status(404).json({
       message: "employee not found",
     });
   }
@@ -160,7 +160,7 @@ router.get("/getAllRemovedEmployees", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Employee.find({ isDeleted: true });
@@ -175,12 +175,12 @@ router.get("/getAllRemovedEmployees", middleware, async (req, res) => {
 router.patch("/updateEmployee/:id", middleware, async (req, res) => {
   if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
     return res.status(403).json({
-      message: "Forbidden: Only employees can access this resource",
+      message: "Forbidden: You do not have permission to access this resource",
     });
   }
   const employee = await Employee.findOne({ _id: req.params.id });
   if (!employee) {
-    return res.status(400).json({
+    return res.status(404).json({
       message: "employee not found",
     });
   }

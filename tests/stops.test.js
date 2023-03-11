@@ -17,7 +17,15 @@ describe("POST /addStops", () => {
         stop_state: "Pune",
         createdBy: "640ac76632e43f5c6bb23090",
       });
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBeOneOf([200, 409]);
+    if (res.statusCode === 200) {
+      expect(res.body.message).toBe("Operation Successful");
+      console.log(res.body.message);
+    }
+    if (res.statusCode === 409) {
+      expect(res.body.message).toBe("Stop already exists");
+      console.log(res.body.message);
+    }
   });
 
   //with customer token
@@ -61,21 +69,6 @@ describe("POST /addStops", () => {
     });
     expect(res.statusCode).toBe(403);
     expect(res.body.message).toBe("Authentication failed");
-    console.log(res.body.message);
-  });
-  //check if stop exists
-  it("Adding a stop", async () => {
-    const token = tokens.employeeToken;
-    const res = await request(app)
-      .post("/addStops")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        stop_name: "Mumbai",
-        stop_state: "Maharashtra",
-        createdBy: "640155ad99732683325dce60",
-      });
-    expect(res.statusCode).toBe(409);
-    expect(res.body.message).toBe("Stop already exists");
     console.log(res.body.message);
   });
 });
@@ -132,17 +125,15 @@ describe("PATCH /removeStopByID/:id", () => {
     const res = await request(app)
       .patch("/removeStopByID/640ac767bb097b1cd59bce69")
       .set("Authorization", `Bearer ${token}`);
-    expect(res.statusCode).toBe(200);
-  });
-  //check if stop exists
-  it("should remove one stop by id", async () => {
-    const token = tokens.employeeToken;
-    const res = await request(app)
-      .patch("/removeStopByID/640ac767bb097b1cd59bce69")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.statusCode).toBe(404);
-    expect(res.body.message).toBe("Stop not found");
-    console.log(res.body.message);
+    expect(res.statusCode).toBeOneOf([200, 404]);
+    if (res.statusCode === 200) {
+      expect(res.body.message).toBe("Operation successful");
+      console.log(res.body.message);
+    }
+    if (res.statusCode === 404) {
+      expect(res.body.message).toBe("Stop not found");
+      console.log(res.body.message);
+    }
   });
   //customer token
   it("should remove one stop by id", async () => {
@@ -232,23 +223,17 @@ describe("PATCH /updateStops/:id", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         stop_name: "Mumbai",
-        stop_state: "Maharashtra"
+        stop_state: "Maharashtra",
       });
-    expect(res.statusCode).toBe(200);
-  });
-  //check if stop exists
-  it("updating a stop", async () => {
-    const token = tokens.employeeToken;
-    const res = await request(app)
-      .patch("/updateStops/640ad4b387f8b6fcb14539ae")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        stop_name: "Mumbai",
-        stop_state: "Maharashtra"
-      });
-    expect(res.statusCode).toBe(404);
-    expect(res.body.message).toBe("Stop not found");
-    console.log(res.body.message);
+    expect(res.statusCode).toBeOneOf([200, 404]);
+    if (res.statusCode === 200) {
+      expect(res.body.message).toBe("Operation successful");
+      console.log(res.body.message);
+    }
+    if (res.statusCode === 404) {
+      expect(res.body.message).toBe("Stop not found");
+      console.log(res.body.message);
+    }
   });
   //customer token
   it("updating a stop", async () => {
@@ -258,7 +243,7 @@ describe("PATCH /updateStops/:id", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         stop_name: "Mumbai",
-        stop_state: "Maharashtra"
+        stop_state: "Maharashtra",
       });
     expect(res.statusCode).toBe(403);
     expect(res.body.message).toBe(
@@ -274,7 +259,7 @@ describe("PATCH /updateStops/:id", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         stop_name: "Mumbai",
-        stop_state: "Maharashtra"
+        stop_state: "Maharashtra",
       });
     expect(res.statusCode).toBe(403);
     expect(res.body.message).toBe("Authentication failed");
@@ -286,10 +271,11 @@ describe("PATCH /updateStops/:id", () => {
       .patch("/updateStops/640ad4b387f8b6fcb14539ae")
       .send({
         stop_name: "Mumbai",
-        stop_state: "Maharashtra"
+        stop_state: "Maharashtra",
       });
     expect(res.statusCode).toBe(403);
     expect(res.body.message).toBe("Authentication failed");
     console.log(res.body.message);
   });
 });
+

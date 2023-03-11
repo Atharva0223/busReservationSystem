@@ -14,21 +14,33 @@ router.post("/booking", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
-
     //all fields are required
     const book = req.body;
     if (
       !book.customer ||
       !book.passengers ||
       !book.journey ||
-      !book.bus ||
-      !book.createdBy
+      !book.bus
     ) {
       return res.status(400).json({ message: "All fields are required" });
     }
+    const exists = await Booking.findOne({
+      $or: [
+        {
+          customer: req.body.customer,
+          journey: req.body.journey,
+          bus: req.body.bus,
+          isDeleted: false,
+        },
+      ],
+    });
+    if (exists) {
+      return res.status(409).json({ message: "Booking already exists" });
+    }
+
     const journey = await Journey.findById(book.journey).populate({
       path: "bus",
     });
@@ -52,18 +64,18 @@ router.post("/booking", middleware, async (req, res) => {
     const booking = new Booking({
       _id: mongoose.Types.ObjectId(),
       customer: book.customer,
+      journey: book.journey,
       passengers: book.passengers,
       seats: book.seats,
       bus: book.bus,
       fare: journey.fare * book.passengers.length,
-      createdBy: book.createdBy,
     });
 
-    const result =  await booking.save();
+    const result = await booking.save();
     //output
     res.status(200).json({
       message: "Operation successful",
-      result: result
+      result: result,
     });
   } catch (err) {
     //error
@@ -77,7 +89,7 @@ router.get("/getAllBookings", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Booking.find({ isDeleted: false });
@@ -97,7 +109,7 @@ router.patch("/cancelBookingById/:id", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Booking.findOne({
@@ -112,7 +124,7 @@ router.patch("/cancelBookingById/:id", middleware, async (req, res) => {
     );
     res.status(200).json({
       message: "Booking deleted",
-      Deleting: exists
+      Deleting: exists,
     });
   } catch (err) {
     res.status(400).json({
@@ -125,7 +137,7 @@ router.get("/getAllcanceledBookings", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const docs = await Booking.find({ isDeleted: true });
@@ -145,7 +157,7 @@ router.patch("/updateBooking/:id", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Booking.findOne({

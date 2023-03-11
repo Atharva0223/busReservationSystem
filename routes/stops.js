@@ -10,7 +10,7 @@ router.post("/addStops", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Stops.findOne({
@@ -19,7 +19,7 @@ router.post("/addStops", middleware, async (req, res) => {
       ],
     });
     if (exists) {
-      res.status(409).json({ message: "Stop already exists" });
+      return res.status(409).json({ message: "Stop already exists" });
     }
     const result = await Stops.create({
       _id: mongoose.Types.ObjectId(),
@@ -49,7 +49,7 @@ router.get("/getAllStops", middleware, async (req, res) => {
       req.userData.role !== "Customer"
     ) {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Stops.find({ isDeleted: false });
@@ -72,7 +72,7 @@ router.patch("/removeStopByID/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Stops.findOne({
@@ -98,7 +98,7 @@ router.get("/getAllRemovedStops", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin" && req.userData.role !== "Employee") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const result = await Stops.find({ isDeleted: true });
@@ -117,7 +117,7 @@ router.patch("/updateStops/:id", middleware, async (req, res) => {
   try {
     if (req.userData.role !== "Admin") {
       return res.status(403).json({
-        message: "Forbidden: Only employees can access this resource",
+        message: "Forbidden: You do not have permission to access this resource",
       });
     }
     const exists = await Stops.findOne({
